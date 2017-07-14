@@ -1,4 +1,4 @@
-// USART_STM32_CONSOLE library: This library shall enable interfacing an FTDI-based UART device to an STM32F0
+// USART_STM32_CONSOLE library: This library shall enable interfacing an FTDI-based UART device to an STM32F0 chip.
 
 // Pin Definitions
 #define    USART_STM32_GPIO_PORT       GPIOA

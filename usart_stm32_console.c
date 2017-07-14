@@ -42,5 +42,7 @@ void USART_STM32_sendToUSART(char const *givenString) {
 	}
 	USART_SendData(USART_STM32_USART_PORT, 0x0A);
 	USART_SendData(USART_STM32_USART_PORT, 0x0D);
-
+	while(USART_GetFlagStatus(USART_STM32_USART_PORT, USART_FLAG_TC) == RESET) {
+			// wait for buffer to clear
+	}
 }
