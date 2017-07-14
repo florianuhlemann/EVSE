@@ -4,8 +4,11 @@
 
 void USART_STM32_configureInterface(void) {
 
-	// Enable GPIO Pins
+	// Enabling Clocks
 	RCC_AHBPeriphClockCmd(USART_STM32_GPIO_PERIPH, ENABLE);
+	RCC_APB2PeriphClockCmd(USART_STM32_USART_PERIPH, ENABLE);
+
+	// Configuring GPIO
 	GPIO_InitTypeDef GPIO_InitStructure;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -16,8 +19,7 @@ void USART_STM32_configureInterface(void) {
 	GPIO_PinAFConfig(USART_STM32_GPIO_PORT, USART_STM32_GPIO_RX_PINSRC, USART_STM32_USART_AF);
 	GPIO_Init(USART_STM32_GPIO_PORT, &GPIO_InitStructure);
 
-	// Enable USART Interface
-	RCC_APB2PeriphClockCmd(USART_STM32_USART_PERIPH, ENABLE);
+	// Configuring USARTx
 	USART_InitTypeDef USART_InitStructure;
 	USART_InitStructure.USART_BaudRate = USART_STM32_BAUDRATE;
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;

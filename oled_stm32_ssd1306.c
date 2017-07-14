@@ -1,7 +1,7 @@
 #include "stm32f0xx.h"
 #include "oled_stm32_ssd1306.h"
 
-void SSD1306_configureSpiInterface(void) {
+void OLED_STM32_configureInterface(void) {
 
 	// Enabling Clocks
 	RCC_AHBPeriphClockCmd(OLED_RCC_PERIPH, ENABLE);
@@ -39,62 +39,62 @@ void SSD1306_configureSpiInterface(void) {
 
 
 // Execute initialization commands and configure display with initial command and display buffer.
-void SSD1306_initDisplay(void) {
+void OLED_STM32_initDisplay(void) {
 
-	SSD1306_digitalWrite(OLED_RST_PIN, LOW);
+	OLED_STM32_digitalWrite(OLED_RST_PIN, LOW);
 	// wait 100ms
-	SSD1306_digitalWrite(OLED_RST_PIN, HIGH);
+	OLED_STM32_digitalWrite(OLED_RST_PIN, HIGH);
 	// wait 100ms
 	// init command Buffer?
-	SSD1306_sendCommandBuffer(SSD1306_commandBuffer);
-	SSD1306_sendDisplayBuffer(SSD1306_displayBuffer);
+	OLED_STM32_sendCommandBuffer(OLED_STM32_commandBuffer);
+	OLED_STM32_sendDisplayBuffer(OLED_STM32_displayBuffer);
 	// send initial image buffer
 
 }
 
 
-void SSD1306_sendCommand(uint8_t myData) {
+void OLED_STM32_sendCommand(uint8_t myData) {
 
-	SSD1306_digitalWrite(OLED_SS_PIN, HIGH);
-	SSD1306_digitalWrite(OLED_SS_PIN, LOW);
-	SSD1306_digitalWrite(OLED_CS_PIN, LOW);
+	OLED_STM32_digitalWrite(OLED_SS_PIN, HIGH);
+	OLED_STM32_digitalWrite(OLED_SS_PIN, LOW);
+	OLED_STM32_digitalWrite(OLED_CS_PIN, LOW);
 	SPI_SendData8(OLED_SPI_PORT, myData);
-	SSD1306_digitalWrite(OLED_SS_PIN, HIGH); // We are done with this SPI device
+	OLED_STM32_digitalWrite(OLED_SS_PIN, HIGH); // We are done with this SPI device
 
 }
 
 
-void SSD1306_sendCommandBuffer(uint8_t *commandBuffer) {
+void OLED_STM32_sendCommandBuffer(uint8_t *commandBuffer) {
 
-	SSD1306_digitalWrite(OLED_SS_PIN, HIGH);
-	SSD1306_digitalWrite(OLED_SS_PIN, LOW); // slave select
-	SSD1306_digitalWrite(OLED_CS_PIN, LOW); // command select LOW for commands
+	OLED_STM32_digitalWrite(OLED_SS_PIN, HIGH);
+	OLED_STM32_digitalWrite(OLED_SS_PIN, LOW); // slave select
+	OLED_STM32_digitalWrite(OLED_CS_PIN, LOW); // command select LOW for commands
 	// change to variable length of array
 	for (int i = 0; i < 19; i++) {
 		SPI_SendData8(OLED_SPI_PORT, commandBuffer[i]);
 	}
-	SSD1306_digitalWrite(OLED_SS_PIN, HIGH); // We are done with this SPI device
+	OLED_STM32_digitalWrite(OLED_SS_PIN, HIGH); // We are done with this SPI device
 
 }
 
 
-void SSD1306_sendDisplayBuffer(uint8_t *displayBuffer) {
+void OLED_STM32_sendDisplayBuffer(uint8_t *displayBuffer) {
 
-	SSD1306_digitalWrite(OLED_SS_PIN, HIGH);
-	SSD1306_digitalWrite(OLED_SS_PIN, LOW); // slave select
-	SSD1306_digitalWrite(OLED_CS_PIN, HIGH); // command select HIGH for data
+	OLED_STM32_digitalWrite(OLED_SS_PIN, HIGH);
+	OLED_STM32_digitalWrite(OLED_SS_PIN, LOW); // slave select
+	OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH); // command select HIGH for data
 	// change to variable length of array
 	for (int i = 0; i < 512; i++) {
 		SPI_SendData8(OLED_SPI_PORT, displayBuffer[i]);
 	}
-	SSD1306_digitalWrite(OLED_SS_PIN, HIGH); // We are done with this SPI device
+	OLED_STM32_digitalWrite(OLED_SS_PIN, HIGH); // We are done with this SPI device
 
 }
 
 
 // Helper function for pulling OLED pins high or low.
-// Example: SSD1306_digitalWrite(OLED_CS_PIN, HIGH);
-void SSD1306_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal) {
+// Example: OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH);
+void OLED_STM32_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal) {
 
 	GPIO_WriteBit(OLED_GPIO_PORT, GPIO_Pin, BitVal);
 

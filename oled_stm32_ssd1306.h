@@ -1,4 +1,4 @@
-// OLED_STM32_SSD1306 library: This library shall enable interfacing an SSD1306 OLED based display on an STM32F0 chip.
+// OLED_STM32_OLED_STM32 library: This library shall enable interfacing an OLED_STM32 OLED based display on an STM32F0 chip.
 
 // Pin Definitions
 #define    OLED_GPIO_PORT        GPIOA
@@ -46,7 +46,7 @@
 #define    OLED_DISPLAYON        0xAF
 
 // Variable Declarations
-uint8_t SSD1306_commandBuffer[] = {
+uint8_t OLED_STM32_commandBuffer[] = {
 	OLED_DISPLAYOFF, //maybe skip?
 	OLED_SETMULTIPLEX,
 	OLED_MULTIPLEXSETTING,
@@ -67,7 +67,8 @@ uint8_t SSD1306_commandBuffer[] = {
 	OLED_CHGPUMPSETTING,
 	OLED_DISPLAYON
 };
-uint8_t SSD1306_displayBuffer[] = {
+
+uint8_t OLED_STM32_displayBuffer[] = {
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,128,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,192,227,0,0,128,3,0,
@@ -90,9 +91,9 @@ uint8_t SSD1306_displayBuffer[] = {
 // Function Definitions
 
 // Function Declarations
-void SSD1306_configureSpiInterface(void);
-void SSD1306_initDisplay(void);
-void SSD1306_sendCommand(uint8_t myData);
-void SSD1306_sendCommandBuffer(uint8_t *commandBuffer);
-void SSD1306_sendDisplayBuffer(uint8_t *displayBuffer);
-void SSD1306_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal);
+void OLED_STM32_configureInterface(void);
+void OLED_STM32_initDisplay(void);
+void OLED_STM32_sendCommand(uint8_t myData);
+void OLED_STM32_sendCommandBuffer(uint8_t *commandBuffer);
+void OLED_STM32_sendDisplayBuffer(uint8_t *displayBuffer);
+void OLED_STM32_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal);
