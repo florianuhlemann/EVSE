@@ -15,6 +15,12 @@ volatile uint8_t CLK_Previous_State = 0;
 volatile uint8_t DT_Previous_State = 0;
 volatile Direction direction = FORWARD;
 
+void ENCODER_STM32_configureInterface(void) {
+	ENCODER_STM32_initInterruptCLK();
+	ENCODER_STM32_initInterruptDT();
+	ENCODER_STM32_initInterruptSW();
+}
+
 
 void ENCODER_STM32_initInterruptCLK(void) {
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -76,7 +82,36 @@ void ENCODER_STM32_initInterruptDT(void) {
 }
 
 
-void updateAmpSetting(void) {
+void ENCODER_STM32_initInterruptSW(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
+	EXTI_InitTypeDef EXTI_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource4);
+
+	EXTI_InitStructure.EXTI_Line = EXTI_Line4;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+	EXTI_Init(&EXTI_InitStructure);
+
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI4_15_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_InitStructure.NVIC_IRQChannelPriority = 0x03;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+
+void ENCODER_STM32_updateAmpSetting(void) {
 
 	if (counter / 3 != ampSetting) {
 		ampSetting = counter / 3;
@@ -88,7 +123,7 @@ void updateAmpSetting(void) {
 }
 
 
-uint16_t stateConfig(void) {
+uint16_t ENCODER_STM32_stateConfig(void) {
 
 	uint8_t currentState = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_1) | GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_2) << 1;
 	prePrePreviousState = prePreviousState;
@@ -99,7 +134,7 @@ uint16_t stateConfig(void) {
 }
 
 
-void updateCounter(uint16_t stateConfig) {
+void ENCODER_STM32_updateCounter(uint16_t stateConfig) {
 
 	// left turns
 	if ( stateConfig == 24 || stateConfig == 35 || stateConfig == 40 || stateConfig == 51 || stateConfig == 56 ) {
@@ -119,7 +154,7 @@ void updateCounter(uint16_t stateConfig) {
 			counter = 96;
 		}
 	}
-	updateAmpSetting();
+	ENCODER_STM32_updateAmpSetting();
 
 }
 
@@ -127,7 +162,7 @@ void updateCounter(uint16_t stateConfig) {
 void EXTI0_1_IRQHandler(void) {
 
 	if(EXTI_GetITStatus(EXTI_Line1) != RESET) {
-		updateCounter(stateConfig());
+		ENCODER_STM32_updateCounter(ENCODER_STM32_stateConfig());
 		//USART_STM32_sendToUSART("EXTI0_1_IRQHandler @ CLK triggered");
 		EXTI_ClearITPendingBit(EXTI_Line1);
 	}
@@ -138,9 +173,19 @@ void EXTI0_1_IRQHandler(void) {
 void EXTI2_3_IRQHandler(void) {
 
 	if(EXTI_GetITStatus(EXTI_Line2) != RESET) {
-		updateCounter(stateConfig());
+		ENCODER_STM32_updateCounter(ENCODER_STM32_stateConfig());
 		//USART_STM32_sendToUSART("EXTI2_3_IRQHandler @ DT triggered");
 		EXTI_ClearITPendingBit(EXTI_Line2);
+	}
+
+}
+
+
+void EXTI4_15_IRQHandler(void) {
+
+	if(EXTI_GetITStatus(EXTI_Line4) != RESET) {
+		USART_STM32_sendToUSART("SW pushed.");
+		EXTI_ClearITPendingBit(EXTI_Line4);
 	}
 
 }

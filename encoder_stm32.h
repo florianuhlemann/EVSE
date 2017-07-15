@@ -34,5 +34,10 @@ typedef enum {FORWARD = 0, REVERSE = 1} Direction;
 // Function Definitions
 
 // Function Declarations
+void ENCODER_STM32_configureInterface(void);
 void ENCODER_STM32_initInterruptCLK(void);
 void ENCODER_STM32_initInterruptDT(void);
+void ENCODER_STM32_initInterruptSW(void);
+uint16_t ENCODER_STM32_stateConfig(void);
+void ENCODER_STM32_updateCounter(uint16_t stateConfig);
+void ENCODER_STM32_updateAmpSetting(void);
