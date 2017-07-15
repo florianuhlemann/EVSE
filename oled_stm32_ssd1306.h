@@ -23,6 +23,9 @@
 #define    OLED_DISPLAY_HEIGHT   32
 #define    HIGH                  Bit_SET
 #define    LOW                   Bit_RESET
+#define    COMMAND_BUFFER_LENGTH 21
+#define    DISPLAY_BUFFER_LENGTH OLED_DISPLAY_WIDTH * OLED_DISPLAY_HEIGHT / 8
+
 
 // Parameter Definitions in correct order
 #define    OLED_DISPLAYOFF       0xAE
@@ -53,5 +56,6 @@
 // Function Declarations
 void OLED_STM32_configureInterface(void);
 void OLED_STM32_initDisplay(void);
-void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType);
+void OLED_STM32_sendDisplayBuffer(void);
+void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberOfElements);
 void OLED_STM32_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal);
