@@ -1,13 +1,17 @@
 // OLED_STM32_OLED_STM32 library: This library shall enable interfacing an OLED_STM32 OLED based display on an STM32F0 chip.
 
 // Pin Definitions
-#define    OLED_GPIO_PORT        GPIOA
-#define    OLED_RCC_PERIPH       RCC_AHBPeriph_GPIOA
+#define    OLED_GPIO_PORT1       GPIOA
+#define    OLED_RCC_PERIPH1      RCC_AHBPeriph_GPIOA
+#define    OLED_CS_PIN           GPIO_Pin_0
 #define    OLED_RST_PIN          GPIO_Pin_3
-#define    OLED_SS_PIN           GPIO_Pin_4
 #define    OLED_SCK_PIN          GPIO_Pin_5
-#define    OLED_CS_PIN           GPIO_Pin_6
 #define    OLED_MOSI_PIN         GPIO_Pin_7
+
+#define    OLED_GPIO_PORT2       GPIOB
+#define    OLED_RCC_PERIPH2      RCC_AHBPeriph_GPIOB
+#define    OLED_SS_PIN           GPIO_Pin_1
+
 
 // SPI Definitions
 #define    OLED_SPI_PORT         SPI1

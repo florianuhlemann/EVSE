@@ -33,7 +33,8 @@ uint8_t OLED_STM32_commandBuffer[COMMAND_BUFFER_LENGTH] = {
 void OLED_STM32_configureInterface(void) {
 
 	// Enabling Clocks
-	RCC_AHBPeriphClockCmd(OLED_RCC_PERIPH, ENABLE);
+	RCC_AHBPeriphClockCmd(OLED_RCC_PERIPH1, ENABLE);
+	RCC_AHBPeriphClockCmd(OLED_RCC_PERIPH2, ENABLE);
 	RCC_APB2PeriphClockCmd(OLED_SPI_PERIPH, ENABLE);
 
 	// Configuring GPIO
@@ -42,18 +43,20 @@ void OLED_STM32_configureInterface(void) {
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Pin = OLED_SCK_PIN | OLED_MOSI_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_PinAFConfig(OLED_GPIO_PORT, OLED_SCK_PINSOURCE, OLED_GPIO_AF);
-	GPIO_PinAFConfig(OLED_GPIO_PORT, OLED_MOSI_PINSOURCE, OLED_GPIO_AF);
-	GPIO_Init(OLED_GPIO_PORT, &GPIO_InitStructure);
+	GPIO_PinAFConfig(OLED_GPIO_PORT1, OLED_SCK_PINSOURCE, OLED_GPIO_AF);
+	GPIO_PinAFConfig(OLED_GPIO_PORT1, OLED_MOSI_PINSOURCE, OLED_GPIO_AF);
+	GPIO_Init(OLED_GPIO_PORT1, &GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_InitStructure.GPIO_Pin = OLED_RST_PIN | OLED_SS_PIN | OLED_CS_PIN;
+	GPIO_InitStructure.GPIO_Pin = OLED_RST_PIN | OLED_CS_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_Init(OLED_GPIO_PORT, &GPIO_InitStructure);
+	GPIO_Init(OLED_GPIO_PORT1, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = OLED_SS_PIN;
+	GPIO_Init(OLED_GPIO_PORT2, &GPIO_InitStructure);
 
 	// Initializing GPIO
-	GPIO_SetBits(OLED_GPIO_PORT, OLED_RST_PIN);
-	GPIO_SetBits(OLED_GPIO_PORT, OLED_SS_PIN);
-	GPIO_SetBits(OLED_GPIO_PORT, OLED_CS_PIN);
+	GPIO_SetBits(OLED_GPIO_PORT1, OLED_RST_PIN);
+	GPIO_SetBits(OLED_GPIO_PORT1, OLED_CS_PIN);
+	GPIO_SetBits(OLED_GPIO_PORT2, OLED_SS_PIN);
 
 
 	// Configuring SPIx
@@ -125,7 +128,11 @@ void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberO
 // Helper function for pulling OLED pins high or low.
 // Example: OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH);
 void OLED_STM32_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal) {
-
-	GPIO_WriteBit(OLED_GPIO_PORT, GPIO_Pin, BitVal);
+	
+	if (GPIO_Pin == OLED_SS_PIN) {
+		GPIO_WriteBit(OLED_GPIO_PORT2, GPIO_Pin, BitVal);
+	} else {
+		GPIO_WriteBit(OLED_GPIO_PORT1, GPIO_Pin, BitVal);
+	}
 
 }
