@@ -5,30 +5,13 @@
 
 
 // Variable Declarations
-uint8_t OLED_STM32_commandBuffer[COMMAND_BUFFER_LENGTH] = {
-	0xAE,
-	0xA8,
-	0x1F,
-	0xD3,
-	0x00,
-	0x40,
-	0xA0,
-	0xC0,
-	0xDA,
-	0x02,
-	0x81,
-	0x8F,
-	0x20,
-	0x00,
-	0xA4,
-	0xA6,
-	0xD5,
-	0x80,
-	0x8D,
-	0x10,
-	0xAF
-};
+uint8_t OLED_STM32_commandBuffer[COMMAND_BUFFER_LENGTH] = {0xAE,0xD5,0x80,0xA8,0x1F,0xD3,0x00,0x40,0x8D,0x14,0x20,0x00,0xA1,0xC8,0xDA,0x02,0x81,0x8F,0xD9,0xF1,0xDB,0x40,0x2E,0xA4,0xA6,0xAF};
+uint8_t OLED_STM32_displayBuffer[DISPLAY_BUFFER_LENGTH] = {255,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,129,193,97,225,225,1,1,129,193,193,193,129,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,129,193,193,193,129,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,255,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,128,192,192,0,0,0,0,0,192,192,0,128,192,192,192,0,128,192,192,192,0,0,0,192,192,0,0,128,192,192,0,0,192,192,0,128,192,192,192,0,0,248,254,159,195,112,223,207,240,254,223,225,248,207,195,0,0,128,192,192,192,128,128,0,0,0,128,192,192,0,0,0,192,192,240,254,223,225,248,207,195,0,220,220,28,0,0,128,192,192,192,192,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,255,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,48,24,14,119,119,127,124,120,112,56,127,127,63,7,1,127,127,63,7,3,127,127,103,96,48,63,127,115,48,28,127,127,96,48,127,127,63,7,3,5,15,15,12,255,255,255,61,252,12,12,12,31,63,112,96,96,96,48,62,127,99,97,56,63,127,97,112,56,30,119,119,127,124,120,112,56,28,31,63,112,96,96,96,48,63,127,103,96,48,63,127,113,96,99,99,48,56,24,0,0,0,0,0,0,0,0,0,0,0,0,0,0,255,255,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,135,159,159,152,143,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,255};
 
+
+// Command = D/C LOW
+// Data = D/C HIGH
+// delay before during and after reset 100ms
 
 void OLED_STM32_configureInterface(void) {
 
@@ -47,16 +30,16 @@ void OLED_STM32_configureInterface(void) {
 	GPIO_PinAFConfig(OLED_GPIO_PORT1, OLED_MOSI_PINSOURCE, OLED_GPIO_AF);
 	GPIO_Init(OLED_GPIO_PORT1, &GPIO_InitStructure);
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_InitStructure.GPIO_Pin = OLED_RST_PIN | OLED_CS_PIN;
+	GPIO_InitStructure.GPIO_Pin = OLED_RST_PIN | OLED_DC_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_Init(OLED_GPIO_PORT1, &GPIO_InitStructure);
-	GPIO_InitStructure.GPIO_Pin = OLED_SS_PIN;
+	GPIO_InitStructure.GPIO_Pin = OLED_CS_PIN;
 	GPIO_Init(OLED_GPIO_PORT2, &GPIO_InitStructure);
 
 	// Initializing GPIO
 	GPIO_SetBits(OLED_GPIO_PORT1, OLED_RST_PIN);
-	GPIO_SetBits(OLED_GPIO_PORT1, OLED_CS_PIN);
-	GPIO_SetBits(OLED_GPIO_PORT2, OLED_SS_PIN);
+	GPIO_SetBits(OLED_GPIO_PORT1, OLED_DC_PIN);
+	GPIO_SetBits(OLED_GPIO_PORT2, OLED_CS_PIN);
 
 
 	// Configuring SPIx
@@ -83,15 +66,15 @@ void OLED_STM32_initDisplay(void) {
 	delayMilliseconds(100);
 	OLED_STM32_digitalWrite(OLED_RST_PIN, HIGH);
 	delayMilliseconds(25);
-	OLED_STM32_digitalWrite(OLED_SS_PIN, LOW);
+	OLED_STM32_digitalWrite(OLED_CS_PIN, LOW);
 	delayMilliseconds(25);
 	OLED_STM32_sendBuffer(OLED_STM32_commandBuffer, OLED_SPI_COMMAND, COMMAND_BUFFER_LENGTH);
 	delayMilliseconds(25);
 	//OLED_STM32_sendBuffer(OLED_STM32_displayBuffer, OLED_SPI_DATA, DISPLAY_BUFFER_LENGTH);
 	delayMilliseconds(25);
-	OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH);
+	OLED_STM32_digitalWrite(OLED_DC_PIN, HIGH);
 	delayMilliseconds(25);
-	OLED_STM32_digitalWrite(OLED_SS_PIN, HIGH);
+	OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH);
 
 }
 
@@ -109,10 +92,10 @@ void OLED_STM32_sendDisplayBuffer(void) {
 void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberOfElements) {
 
 	if (bufferType == OLED_SPI_DATA) {
-		OLED_STM32_digitalWrite(OLED_CS_PIN, LOW);
+		OLED_STM32_digitalWrite(OLED_DC_PIN, LOW);
 		delayMilliseconds(25);
 	} else {
-		OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH);
+		OLED_STM32_digitalWrite(OLED_DC_PIN, HIGH);
 		delayMilliseconds(25);
 	}
 	for (uint16_t i = 0; i < numberOfElements; i++) {
@@ -126,10 +109,10 @@ void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberO
 
 
 // Helper function for pulling OLED pins high or low.
-// Example: OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH);
+// Example: OLED_STM32_digitalWrite(OLED_DC_PIN, HIGH);
 void OLED_STM32_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal) {
 	
-	if (GPIO_Pin == OLED_SS_PIN) {
+	if (GPIO_Pin == OLED_CS_PIN) {
 		GPIO_WriteBit(OLED_GPIO_PORT2, GPIO_Pin, BitVal);
 	} else {
 		GPIO_WriteBit(OLED_GPIO_PORT1, GPIO_Pin, BitVal);
