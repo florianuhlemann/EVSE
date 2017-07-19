@@ -3,6 +3,7 @@
 // Pin Definitions
 #define    OLED_GPIO_PORT1       GPIOA
 #define    OLED_RCC_PERIPH1      RCC_AHBPeriph_GPIOA
+#define    OLED_GPIO_SPEED       GPIO_Speed_10MHz
 #define    OLED_DC_PIN           GPIO_Pin_0
 #define    OLED_RST_PIN          GPIO_Pin_3
 #define    OLED_SCK_PIN          GPIO_Pin_5
@@ -12,10 +13,13 @@
 #define    OLED_RCC_PERIPH2      RCC_AHBPeriph_GPIOB
 #define    OLED_CS_PIN           GPIO_Pin_1
 
-
 // SPI Definitions
 #define    OLED_SPI_PORT         SPI1
 #define    OLED_SPI_PERIPH       RCC_APB2Periph_SPI1
+#define    OLED_SPI_PRESCALER    SPI_BaudRatePrescaler_4 //2,4,8 works
+#define    OLED_SPI_CPHA         SPI_CPHA_1Edge
+#define    OLED_SPI_CPOL         SPI_CPOL_Low
+#define    OLED_SPI_DATASIZE     SPI_DataSize_8b
 #define    OLED_SCK_PINSOURCE    GPIO_PinSource5
 #define    OLED_MOSI_PINSOURCE   GPIO_PinSource7
 #define    OLED_GPIO_AF          GPIO_AF_0
@@ -29,7 +33,6 @@
 #define    LOW                   Bit_RESET
 #define    COMMAND_BUFFER_LENGTH 26
 #define    DISPLAY_BUFFER_LENGTH OLED_DISPLAY_WIDTH * OLED_DISPLAY_HEIGHT / 8
-
 
 // Parameter Definitions in correct order
 #define    OLED_DISPLAYOFF       0xAE // turn display off
@@ -64,6 +67,5 @@
 // Function Declarations
 void OLED_STM32_configureInterface(void);
 void OLED_STM32_initDisplay(void);
-void OLED_STM32_sendDisplayBuffer(void);
 void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberOfElements);
 void OLED_STM32_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal);

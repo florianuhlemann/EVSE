@@ -23,7 +23,7 @@ void OLED_STM32_configureInterface(void) {
 	// Configuring GPIO
 	GPIO_InitTypeDef GPIO_InitStructure;
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Speed = OLED_GPIO_SPEED;
 	GPIO_InitStructure.GPIO_Pin = OLED_SCK_PIN | OLED_MOSI_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
 	GPIO_PinAFConfig(OLED_GPIO_PORT1, OLED_SCK_PINSOURCE, OLED_GPIO_AF);
@@ -37,18 +37,16 @@ void OLED_STM32_configureInterface(void) {
 	GPIO_Init(OLED_GPIO_PORT2, &GPIO_InitStructure);
 
 	// Initializing GPIO
-	GPIO_SetBits(OLED_GPIO_PORT1, OLED_RST_PIN);
-	GPIO_SetBits(OLED_GPIO_PORT1, OLED_DC_PIN);
-	GPIO_SetBits(OLED_GPIO_PORT2, OLED_CS_PIN);
-
+	OLED_STM32_digitalWrite(OLED_RST_PIN, HIGH);
+	OLED_STM32_digitalWrite(OLED_DC_PIN, HIGH);
+	OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH);
 
 	// Configuring SPIx
 	SPI_InitTypeDef SPI_InitStructure;
-	SPI_InitStructure.SPI_BaudRatePrescaler	= SPI_BaudRatePrescaler_16;
-	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
-	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
-	SPI_InitStructure.SPI_CRCPolynomial = 10;
-	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+	SPI_InitStructure.SPI_BaudRatePrescaler	= OLED_SPI_PRESCALER; //4 or 8 works
+	SPI_InitStructure.SPI_CPHA = OLED_SPI_CPHA;
+	SPI_InitStructure.SPI_CPOL = OLED_SPI_CPOL;
+	SPI_InitStructure.SPI_DataSize = OLED_SPI_DATASIZE;
 	SPI_InitStructure.SPI_Direction = SPI_Direction_1Line_Tx;
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
@@ -63,45 +61,29 @@ void OLED_STM32_configureInterface(void) {
 void OLED_STM32_initDisplay(void) {
 
 	OLED_STM32_digitalWrite(OLED_RST_PIN, LOW);
-	delayMilliseconds(100);
 	OLED_STM32_digitalWrite(OLED_RST_PIN, HIGH);
-	delayMilliseconds(25);
 	OLED_STM32_digitalWrite(OLED_CS_PIN, LOW);
-	delayMilliseconds(25);
 	OLED_STM32_sendBuffer(OLED_STM32_commandBuffer, OLED_SPI_COMMAND, COMMAND_BUFFER_LENGTH);
-	delayMilliseconds(25);
-	//OLED_STM32_sendBuffer(OLED_STM32_displayBuffer, OLED_SPI_DATA, DISPLAY_BUFFER_LENGTH);
-	delayMilliseconds(25);
+	OLED_STM32_sendBuffer(OLED_STM32_displayBuffer, OLED_SPI_DATA, DISPLAY_BUFFER_LENGTH);
 	OLED_STM32_digitalWrite(OLED_DC_PIN, HIGH);
-	delayMilliseconds(25);
 	OLED_STM32_digitalWrite(OLED_CS_PIN, HIGH);
 
 }
 
 
-void OLED_STM32_sendDisplayBuffer(void) {
-
-	//OLED_STM32_sendBuffer(OLED_STM32_displayBuffer, OLED_SPI_DATA, 512);
-
-}
-
-
 // A function to send a uint8_t buffer array to the SSD1306 controller. Possible types are:
-// OLED_SPI_COMMAND - This is used for all commands sent to the controller.
-// OLED_SPI_DATA - This is used for all display data transmission to the controller.
+// OLED_SPI_COMMAND - This is used for all commands sent to the controller. D/C = LOW
+// OLED_SPI_DATA - This is used for all display data transmission to the controller. D/C = HIGH
 void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberOfElements) {
 
 	if (bufferType == OLED_SPI_DATA) {
-		OLED_STM32_digitalWrite(OLED_DC_PIN, LOW);
-		delayMilliseconds(25);
-	} else {
 		OLED_STM32_digitalWrite(OLED_DC_PIN, HIGH);
-		delayMilliseconds(25);
+	} else {
+		OLED_STM32_digitalWrite(OLED_DC_PIN, LOW);
 	}
 	for (uint16_t i = 0; i < numberOfElements; i++) {
 		SPI_SendData8(OLED_SPI_PORT, buffer[i]);
 	}
-
     while( !(SPI1->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
     while( SPI1->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
 
