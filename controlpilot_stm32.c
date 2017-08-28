@@ -10,9 +10,10 @@ void CONTROLPILOT_STM32_configure(void) {
 	RCC_AHBPeriphClockCmd(CONTROLPILOT_STM32_GPIO_PERIPH, ENABLE);
 	GPIO_InitTypeDef GPIO_InitStructure;
 	GPIO_InitStructure.GPIO_Pin = CONTROLPILOT_STM32_GPIO_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(CONTROLPILOT_STM32_GPIO_PORT, &GPIO_InitStructure);
 
 	// Configure Timers
@@ -20,27 +21,25 @@ void CONTROLPILOT_STM32_configure(void) {
 	CONTROLPILOT_STM32_timerHighConfig(CONTROLPILOT_STM32_TIMER_HIGH_PERIOD);
 	CONTROLPILOT_STM32_timerLowConfig(CONTROLPILOT_STM32_TIMER_LOW_PERIOD);
 	CONTROLPILOT_STM32_timerHighStart();
-	delayMilliseconds(5000);
-	CONTROLPILOT_STM32_timerLowChangeFrequency(480);
 
 }
 
 
 void CONTROLPILOT_STM32_timerHighConfig(uint16_t period) {
 
-	// Configure Timer
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
-	uint16_t APB1_PrescalerValue;
-	uint32_t TIM_PeriodValue = period;
-    RCC_APB1PeriphClockCmd(CONTROLPILOT_STM32_TIMER_HIGH_PERIPH, ENABLE);
-    APB1_PrescalerValue = (RCC_Clocks.PCLK_Frequency / 1000000) - 1;
-    TIM_TimeBaseStructure.TIM_Prescaler = APB1_PrescalerValue;
-    TIM_TimeBaseStructure.TIM_Period = TIM_PeriodValue;
+    //Configure Timer
+    RCC_APB2PeriphClockCmd(CONTROLPILOT_STM32_TIMER_HIGH_PERIPH, ENABLE);
+    uint16_t myPrescalerValue = (RCC_Clocks.PCLK_Frequency / 1000000) - 1;
+
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+    TIM_TimeBaseStructure.TIM_Prescaler = myPrescalerValue - 1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseStructure.TIM_Period = period;
+    TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseInit(CONTROLPILOT_STM32_TIMER_HIGH, &TIM_TimeBaseStructure);
 
     // Configure NVIC
+    NVIC_InitTypeDef NVIC_InitStructure;
     NVIC_InitStructure.NVIC_IRQChannel = CONTROLPILOT_STM32_TIMER_HIGH_IRQ;
     NVIC_InitStructure.NVIC_IRQChannelPriority = CONTROLPILOT_STM32_TIMER_HIGH_PRIO;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -54,19 +53,19 @@ void CONTROLPILOT_STM32_timerHighConfig(uint16_t period) {
 
 void CONTROLPILOT_STM32_timerLowConfig(uint16_t period) {
 
-	// Configure Timer
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
-	uint16_t APB1_PrescalerValue;
-	uint32_t TIM_PeriodValue = period;
-    RCC_APB1PeriphClockCmd(CONTROLPILOT_STM32_TIMER_LOW_PERIPH, ENABLE);
-    APB1_PrescalerValue = (RCC_Clocks.PCLK_Frequency / 1000000) - 1;
-    TIM_TimeBaseStructure.TIM_Prescaler = APB1_PrescalerValue;
-    TIM_TimeBaseStructure.TIM_Period = TIM_PeriodValue;
+    //Configure Timer
+    RCC_APB2PeriphClockCmd(CONTROLPILOT_STM32_TIMER_LOW_PERIPH, ENABLE);
+    uint16_t myPrescalerValue = (RCC_Clocks.PCLK_Frequency / 1000000) - 1;
+
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+    TIM_TimeBaseStructure.TIM_Prescaler = myPrescalerValue - 1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseStructure.TIM_Period = period;
+    TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseInit(CONTROLPILOT_STM32_TIMER_LOW, &TIM_TimeBaseStructure);
 
     // Configure NVIC
+    NVIC_InitTypeDef NVIC_InitStructure;
     NVIC_InitStructure.NVIC_IRQChannel = CONTROLPILOT_STM32_TIMER_LOW_IRQ;
     NVIC_InitStructure.NVIC_IRQChannelPriority = CONTROLPILOT_STM32_TIMER_LOW_PRIO;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -77,21 +76,10 @@ void CONTROLPILOT_STM32_timerLowConfig(uint16_t period) {
 
 }
 
+
 void CONTROLPILOT_STM32_timerLowChangeFrequency(uint16_t period) {
 
-	// Reconfigure Timer
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-	uint16_t APB1_PrescalerValue;
-	uint32_t TIM_PeriodValue = period;
-    RCC_APB1PeriphClockCmd(CONTROLPILOT_STM32_TIMER_LOW_PERIPH, ENABLE);
-    APB1_PrescalerValue = (RCC_Clocks.PCLK_Frequency / 1000000) - 1;
-    TIM_TimeBaseStructure.TIM_Prescaler = APB1_PrescalerValue;
-    TIM_TimeBaseStructure.TIM_Period = TIM_PeriodValue;
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseInit(CONTROLPILOT_STM32_TIMER_LOW, &TIM_TimeBaseStructure);
-
-    // Reinitialize Timer
-    TIM_ClearITPendingBit(CONTROLPILOT_STM32_TIMER_LOW, TIM_IT_Update);
+    TIM_SetAutoreload(CONTROLPILOT_STM32_TIMER_LOW,period);
 
 }
 
@@ -135,7 +123,7 @@ void CONTROLPILOT_STM32_setDutyCycle(double dutyCycle) {
 }
 
 
-void TIM2_IRQHandler(void) {
+void TIM16_IRQHandler(void) {
 
     if (RESET != TIM_GetITStatus(CONTROLPILOT_STM32_TIMER_HIGH, TIM_IT_Update)) {
         TIM_ClearITPendingBit(CONTROLPILOT_STM32_TIMER_HIGH, TIM_IT_Update);
@@ -146,7 +134,7 @@ void TIM2_IRQHandler(void) {
 }
 
 
-void TIM3_IRQHandler(void) {
+void TIM17_IRQHandler(void) {
 
     if (RESET != TIM_GetITStatus(CONTROLPILOT_STM32_TIMER_LOW, TIM_IT_Update)) {
         TIM_ClearITPendingBit(CONTROLPILOT_STM32_TIMER_LOW, TIM_IT_Update);

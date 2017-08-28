@@ -14,4 +14,6 @@ uint8_t OLED_STM32_displayBuffer[DISPLAY_BUFFER_LENGTH];
 // Function Definitions
 
 // Function Declarations
+void HELPER_STM32_initSystemClocks(void);
 void delayMilliseconds (int milliseconds);
+void createDisplayBuffer(void);
