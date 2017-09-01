@@ -38,9 +38,10 @@ void delayMilliseconds (int milliseconds) {
 	}
 }
 
-
+/*
 void createDisplayBuffer(void) {
 	for (int i=0; i<512;i++) {
 		OLED_STM32_displayBuffer[i] = 0xAD;
 	}
 }
+*/

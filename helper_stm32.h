@@ -1,4 +1,4 @@
-#include "oled_stm32_ssd1306.h"
+//#include "oled_stm32_ssd1306.h"
 
 // HELPER_STM32 library: This library provides helper functions and definitions for STM32F0 chip.
 
@@ -9,7 +9,7 @@
 // Parameter Definitions
 
 // Variable Declarations
-uint8_t OLED_STM32_displayBuffer[DISPLAY_BUFFER_LENGTH];
+//uint8_t OLED_STM32_displayBuffer[DISPLAY_BUFFER_LENGTH];
 
 // Function Definitions
 
