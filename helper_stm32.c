@@ -26,6 +26,11 @@ void HELPER_STM32_initSystemClocks(void) {
 	RCC_HCLKConfig(RCC_SYSCLK_Div1);
 	RCC_PCLKConfig(RCC_HCLK_Div1);
 	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK); //useful?
+
+	// Configure ADC clocks
+	RCC_HSI14Cmd(ENABLE);
+	RCC_ADCCLKConfig(RCC_ADCCLK_HSI14);
+	
 }
 
 

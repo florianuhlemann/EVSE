@@ -1,8 +1,9 @@
 // TEMPERATURE_STM32 library: This library shall enable the internal temperature sensor of an STM32F0 chip.
 
-// Pin Definitions
+// GPIO Definitions
+#define    CONTROLPILOT_STM32_GPIO_IN_PERIPH     RCC_AHBPeriph_GPIOA
 
-// USART Definitions
+// ADC Definitions
 
 // Variable Definitions
 

@@ -1,6 +1,7 @@
 #include "stm32f0xx.h"
 #include "usart_stm32_console.h"
 #include "string.h"
+#include <stdlib.h>
 
 void USART_STM32_configureInterface(void) {
 
@@ -32,7 +33,7 @@ void USART_STM32_configureInterface(void) {
 
 }
 
-void USART_STM32_sendToUSART(char const *givenString) {
+void USART_STM32_sendStringToUSART(char const *givenString) {
 	
 	for (int i = 0; i < strlen(givenString); i++) {
 		USART_SendData(USART_STM32_USART_PORT, givenString[i]);
@@ -45,4 +46,19 @@ void USART_STM32_sendToUSART(char const *givenString) {
 	while(USART_GetFlagStatus(USART_STM32_USART_PORT, USART_FLAG_TC) == RESET) {
 			// wait for buffer to clear
 	}
+}
+
+
+void USART_STM32_sendIntegerToUSART(char const *givenString, uint16_t myInteger) {
+
+	for (int i = 0; i < strlen(givenString); i++) {
+		USART_SendData(USART_STM32_USART_PORT, givenString[i]);
+		while(USART_GetFlagStatus(USART_STM32_USART_PORT, USART_FLAG_TC) == RESET) {
+			// wait for buffer to clear
+		}
+	}
+	char buffer[8];
+	itoa(myInteger,buffer,10);
+	USART_STM32_sendStringToUSART(buffer);
+
 }

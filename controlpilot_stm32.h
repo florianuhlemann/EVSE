@@ -3,7 +3,7 @@
 // GPIO Definitions
 #define    CONTROLPILOT_STM32_GPIO_IN_PERIPH     RCC_AHBPeriph_GPIOA
 #define    CONTROLPILOT_STM32_GPIO_OUT_PERIPH    RCC_AHBPeriph_GPIOF
-#define    CONTROLPILOT_STM32_GPIO_IN_PORT       GPIO
+#define    CONTROLPILOT_STM32_GPIO_IN_PORT       GPIOA
 #define    CONTROLPILOT_STM32_GPIO_OUT_PORT      GPIOF
 #define    CONTROLPILOT_STM32_GPIO_IN_PIN        GPIO_Pin_6
 #define    CONTROLPILOT_STM32_GPIO_OUT_PIN       GPIO_Pin_0
@@ -21,14 +21,19 @@
 // ADC Definitions
 #define    CONTROLPILOT_STM32_ADC                ADC1
 #define    CONTROLPILOT_STM32_ADC_PERIPH         RCC_APB2Periph_ADC1
-#define    CONTROLPILOT_STM32_ADC_CHANNEL        ADC_Channel_6
+#define    CONTROLPILOT_STM32_ADC_IRQ            ADC1_IRQn
+#define    CONTROLPILOT_STM32_ADC_IRQ_PRIO       0x02
+#define    CONTROLPILOT_STM32_ADC_CHANNEL_EVSE   ADC_Channel_6
+#define    CONTROLPILOT_STM32_ADC_CHANNEL_TEMP   ADC_Channel_10
+#define    CONTROLPILOT_STM32_ADC_CHANNEL_VREF   ADC_Channel_11
 #define    CONTROLPILOT_STM32_ADC_SAMPLETIME     ADC_SampleTime_1_5Cycles
 
 // Variable Definitions
-#define CONTROLPILOT_STM32_TIMER_HIGH_PERIOD     999
-#define CONTROLPILOT_STM32_TIMER_LOW_PERIOD      320
+#define    CONTROLPILOT_STM32_TIMER_HIGH_PERIOD  999
+#define    CONTROLPILOT_STM32_TIMER_LOW_PERIOD   320
 
 // Parameter Definitions
+#define    VREFINT_CAL_ADDR                      ((uint16_t*) ((uint32_t) 0x1ffff7ba))
 
 // Function Definitions
 #define    CONTROLPILOT_STM32_setHigh()          GPIO_SetBits(CONTROLPILOT_STM32_GPIO_OUT_PORT, CONTROLPILOT_STM32_GPIO_OUT_PIN)
@@ -44,3 +49,6 @@ void CONTROLPILOT_STM32_timerLowStart(void);
 void CONTROLPILOT_STM32_timerLowStop(void);
 void CONTROLPILOT_STM32_timerLowChangeFrequency(uint16_t period);
 void CONTROLPILOT_STM32_setDutyCycle(double dutyCycle);
+
+void CONTROLPILOT_STM32_timerThreeConfig(uint16_t period);
+void CONTROLPILOT_STM32_timerThreeStart();
