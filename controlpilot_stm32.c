@@ -4,11 +4,17 @@
 #include "helper_stm32.h"
 #include "usart_stm32_console.h"
 
-
 RCC_ClocksTypeDef RCC_Clocks;
-uint8_t idx = 0;
+uint16_t idx = 0;
 uint16_t ADC_raw[3];
+VehicleConnect vehicleStatus = DISCONNECTED;
+uint16_t myValueOne = 0;
+uint16_t myValueTwo = 0;
+uint16_t myValueThree = 0;
+uint32_t successfulChangeCounter = 0;
 
+uint16_t EOC_Counter = 0;
+uint16_t EOSEQ_Counter = 0;
 
 void CONTROLPILOT_STM32_configure(void) {
 
@@ -25,27 +31,25 @@ void CONTROLPILOT_STM32_configure(void) {
     GPIO_InitStructure.GPIO_Pin = CONTROLPILOT_STM32_GPIO_IN_PIN;
     GPIO_Init(CONTROLPILOT_STM32_GPIO_IN_PORT, &GPIO_InitStructure);
 
-	// Configure Timers
-	RCC_GetClocksFreq(&RCC_Clocks);
-	CONTROLPILOT_STM32_timerHighConfig(CONTROLPILOT_STM32_TIMER_HIGH_PERIOD);
-	CONTROLPILOT_STM32_timerLowConfig(CONTROLPILOT_STM32_TIMER_LOW_PERIOD);
-	CONTROLPILOT_STM32_timerHighStart();
 
-    // Configure ADC - Channel 6 = PA6 EVSE_IN - Channel 16 = Temperature Sensor - Channel 17 = Vrefint Sensor
+    // Configure ADC
     RCC_APB2PeriphClockCmd(CONTROLPILOT_STM32_ADC_PERIPH, ENABLE);
     ADC_InitTypeDef ADC_InitStructure;
-    ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
-    ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_TRGO;
-    ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
-    ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
-    ADC_InitStructure.ADC_ScanDirection = ADC_ScanDirection_Upward;
+    ADC_StructInit(&ADC_InitStructure);
     ADC_Init(CONTROLPILOT_STM32_ADC, &ADC_InitStructure);
+
+    // Activate Temperature Sensore and Internal Reference Voltage Sensor
+    ADC_TempSensorCmd(ENABLE);
+    ADC_VrefintCmd(ENABLE);
+
+    // Activate Channels
     ADC_ChannelConfig(CONTROLPILOT_STM32_ADC, CONTROLPILOT_STM32_ADC_CHANNEL_EVSE, CONTROLPILOT_STM32_ADC_SAMPLETIME);
     ADC_ChannelConfig(CONTROLPILOT_STM32_ADC, CONTROLPILOT_STM32_ADC_CHANNEL_TEMP, CONTROLPILOT_STM32_ADC_SAMPLETIME);
-    ADC_TempSensorCmd(ENABLE);
     ADC_ChannelConfig(CONTROLPILOT_STM32_ADC, CONTROLPILOT_STM32_ADC_CHANNEL_VREF, CONTROLPILOT_STM32_ADC_SAMPLETIME);
-    ADC_VrefintCmd(ENABLE);
+
+    // Start calibration, then wait until completed, then enable ADC
+    uint16_t calibrationFactor = (uint16_t)ADC_GetCalibrationFactor(CONTROLPILOT_STM32_ADC);
+    USART_STM32_sendIntegerToUSART("ADC Calibration Factor = ", calibrationFactor);
     ADC_Cmd(CONTROLPILOT_STM32_ADC, ENABLE);
 
     // Configure Interrupts
@@ -55,12 +59,24 @@ void CONTROLPILOT_STM32_configure(void) {
     NVIC_InitStructure.NVIC_IRQChannelPriority = CONTROLPILOT_STM32_ADC_IRQ_PRIO;
     NVIC_Init(&NVIC_InitStructure);
 
-    ADC_StartOfConversion(CONTROLPILOT_STM32_ADC); // Needs to be started before ITConfig works.
+    // Activate ADC Interrupts for End of Conversion, End of Sequence
+    ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC);
+    ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ);
     ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOC, ENABLE);
     ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOSEQ, ENABLE);
+    ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_OVR, ENABLE);
 
-    // Start calibration
-    // Wait until calibration is completed
+
+    // Wait until ADC is ready
+    while (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_ADRDY) != SET) {}
+    while (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_ADEN) != SET) {}
+
+    // Configure Timers
+    RCC_GetClocksFreq(&RCC_Clocks);
+    CONTROLPILOT_STM32_timerHighConfig(CONTROLPILOT_STM32_TIMER_HIGH_PERIOD);
+    CONTROLPILOT_STM32_timerLowConfig(CONTROLPILOT_STM32_TIMER_LOW_PERIOD);
+    CONTROLPILOT_STM32_timerHighStart();
+
 
 }
 
@@ -133,7 +149,7 @@ void CONTROLPILOT_STM32_timerThreeConfig(uint16_t period) {
     // Configure NVIC
     NVIC_InitTypeDef NVIC_InitStructure;
     NVIC_InitStructure.NVIC_IRQChannel = TIM14_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPriority = 0x03;
+    NVIC_InitStructure.NVIC_IRQChannelPriority = 0x04;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
@@ -193,13 +209,32 @@ void CONTROLPILOT_STM32_timerThreeStart(void) {
 }
 
 
-void CONTROLPILOT_STM32_setDutyCycle(double dutyCycle) {
+void CONTROLPILOT_STM32_timerThreeStop(void) {
+
+    TIM_ITConfig(TIM14, TIM_IT_Update, DISABLE);
+    TIM_Cmd(TIM14, DISABLE);
 
 }
 
 
 void CONTROLPILOT_STM32_getInputVoltage(void) {
+    USART_STM32_sendIntegerToUSART("myValueOne   = ", myValueOne);
+    USART_STM32_sendIntegerToUSART("myValueTwo   = ", myValueTwo);
+    USART_STM32_sendIntegerToUSART("myValueThree = ", myValueThree);
+    USART_STM32_sendIntegerToUSART("EOC_Counter = ", EOC_Counter);
+    EOC_Counter = 0;
+    USART_STM32_sendIntegerToUSART("EOSEQ_Counter = ", EOSEQ_Counter);
+    EOSEQ_Counter = 0;
+    //vehicleStatus = DISCONNECTED;
+}
 
+
+void CONTROLPILOT_STM32_startADCConversion(void) {
+    if (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC) != RESET) {
+        if (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC) != RESET) {
+            ADC_StartOfConversion(CONTROLPILOT_STM32_ADC);
+        }
+    }
 }
 
 
@@ -207,8 +242,8 @@ void TIM14_IRQHandler(void) {
 
     if (RESET != TIM_GetITStatus(TIM14, TIM_IT_Update)) {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
-        ADC_StartOfConversion(CONTROLPILOT_STM32_ADC);
-        //STM_EVAL_LEDToggle(LED3);
+        CONTROLPILOT_STM32_startADCConversion();
+        CONTROLPILOT_STM32_getInputVoltage();
     }
 
 }
@@ -218,9 +253,18 @@ void TIM16_IRQHandler(void) {
 
     if (RESET != TIM_GetITStatus(CONTROLPILOT_STM32_TIMER_HIGH, TIM_IT_Update)) {
         TIM_ClearITPendingBit(CONTROLPILOT_STM32_TIMER_HIGH, TIM_IT_Update);
-        ADC_StartOfConversion(CONTROLPILOT_STM32_ADC);
-        CONTROLPILOT_STM32_timerLowStart();
-		CONTROLPILOT_STM32_setHigh();
+        if (vehicleStatus != DISCONNECTED) { CONTROLPILOT_STM32_timerLowStart(); }
+        CONTROLPILOT_STM32_setHigh();
+        //CONTROLPILOT_STM32_startADCConversion();
+        if ((myValueOne > 2895) && (myValueOne < 2995)) {
+            successfulChangeCounter++;
+        }
+        if (successfulChangeCounter == 5000) {
+            successfulChangeCounter = 0;
+            vehicleStatus = CONNECTED;
+            USART_STM32_sendStringToUSART("EVSE: Vehicle connected. PWM started.");
+        }
+
     }
 
 }
@@ -237,22 +281,61 @@ void TIM17_IRQHandler(void) {
 }
 
 
+#define IT_STATUS_MODE
+//#define FLAG_STATUS_MODE
+
 void ADC1_IRQHandler(void) {
 
+    #ifdef IT_STATUS_MODE
+    if (ADC_GetITStatus(CONTROLPILOT_STM32_ADC, ADC_IT_EOC) != RESET) {
+        ADC_ClearITPendingBit(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC);
+        ADC_raw[idx] = ADC_GetConversionValue(CONTROLPILOT_STM32_ADC);
+        ADC_raw[idx] = ADC_GetConversionValue(CONTROLPILOT_STM32_ADC);
+        ADC_raw[idx] = ADC_GetConversionValue(CONTROLPILOT_STM32_ADC);
+        idx++;
+        EOC_Counter++;
+    }
+
+    if (ADC_GetITStatus(CONTROLPILOT_STM32_ADC, ADC_IT_EOSEQ) != RESET) {
+        ADC_ClearITPendingBit(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ);
+        myValueOne = ADC_raw[0];
+        myValueTwo = ADC_raw[1];
+        myValueThree = ADC_raw[2];
+        idx = 0;
+        EOSEQ_Counter++;
+    }
+    if (ADC_GetITStatus(CONTROLPILOT_STM32_ADC, ADC_IT_OVR) != RESET) {
+        ADC_ClearITPendingBit(CONTROLPILOT_STM32_ADC, ADC_IT_OVR);
+        USART_STM32_sendStringToUSART("OVERRUN DETECTED");
+    }
+    #endif
+
+    #ifdef FLAG_STATUS_MODE
     if (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC) != RESET) {
         ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC);
         ADC_raw[idx] = ADC_GetConversionValue(CONTROLPILOT_STM32_ADC);
-        uint16_t VddCalibValue = (*VREFINT_CAL_ADDR);
-        uint16_t Vdd = 3300 * VddCalibValue / ADC_raw[0];
-        //uint16_t Vin = ADC_raw[0] * Vdd / 4095;
-        //float VinFloat = (float)(Vin / 10) / 100.0;
-        //float VddFloat = (float)(Vdd / 10) / 100.0;
-        USART_STM32_sendIntegerToUSART("Varuable Vdd = ", Vdd);
         idx++;
+        EOC_Counter++;
     }
+
     if (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ) != RESET) {
         ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ);
+        myValueOne = ADC_raw[0];
+        myValueTwo = ADC_raw[1];
+        myValueThree = ADC_raw[2];
         idx = 0;
-        USART_STM32_sendStringToUSART("ADC: End of Sequence triggered.");
+        EOSEQ_Counter++;
+    }
+    #endif
+
+}
+
+
+void testADEN(void) {
+    if (ADC_GetFlagStatus(ADC1, ADC_FLAG_ADEN)) {
+        USART_STM32_sendStringToUSART("ADC_FLAG_ADEN = 1");
+    } else {
+        USART_STM32_sendStringToUSART("ADC_FLAG_ADEN = 0");
     }
 }
+

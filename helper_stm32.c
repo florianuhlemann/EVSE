@@ -12,8 +12,10 @@ void HELPER_STM32_initSystemClocks(void) {
 	// Enable internal clock sources and wait until ready
 	RCC_HSICmd(ENABLE);
 	RCC_LSICmd(ENABLE);
+	RCC_HSI14Cmd(ENABLE);
 	while (!RCC_GetFlagStatus(RCC_FLAG_HSIRDY)) { /* wait until ready */ }
 	while (!RCC_GetFlagStatus(RCC_FLAG_LSIRDY)) { /* wait until ready */ }
+	while (!RCC_GetFlagStatus(RCC_FLAG_HSI14RDY)) { /* wait until ready */ }
 
 	// Configure PLL to use HSI and wait until ready
 	RCC_PLLCmd(DISABLE);
@@ -21,21 +23,18 @@ void HELPER_STM32_initSystemClocks(void) {
 	RCC_PLLCmd(ENABLE);
 	while (!RCC_GetFlagStatus(RCC_FLAG_PLLRDY)) { /* wait until ready */ }
 
-	// Configure system clocks to use PLL clock source
+	// Configure system clocks to use PLL clock source and configure HSI14 for ADC
 	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
 	RCC_HCLKConfig(RCC_SYSCLK_Div1);
 	RCC_PCLKConfig(RCC_HCLK_Div1);
-	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK); //useful?
-
-	// Configure ADC clocks
-	RCC_HSI14Cmd(ENABLE);
 	RCC_ADCCLKConfig(RCC_ADCCLK_HSI14);
+	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK); //useful?
 	
 }
 
 
 void delayMilliseconds (int milliseconds) {
-	uint64_t counter = 2175 * milliseconds; //for 8MHz setting
+	uint64_t counter = 2175 * milliseconds; //for 48MHz setting
 	//uint64_t counter = 379 * milliseconds; //for 8MHz setting
 	//uint64_t counter = 187 * milliseconds;
 	while (counter > 0) {

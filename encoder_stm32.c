@@ -117,7 +117,7 @@ void ENCODER_STM32_updateAmpSetting(void) {
 		ampSetting = counter / 3;
 		char str[20];
 		sprintf(str, "Ampere = %d", counter / 3);
-		USART_STM32_sendToUSART(str);
+		//USART_STM32_sendToUSART(str);
 	}
 
 }
@@ -184,7 +184,7 @@ void EXTI2_3_IRQHandler(void) {
 void EXTI4_15_IRQHandler(void) {
 
 	if(EXTI_GetITStatus(EXTI_Line4) != RESET) {
-		USART_STM32_sendToUSART("SW pushed.");
+		//USART_STM32_sendToUSART("SW pushed.");
 		EXTI_ClearITPendingBit(EXTI_Line4);
 	}
 
