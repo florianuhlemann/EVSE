@@ -4,17 +4,9 @@
 #include "helper_stm32.h"
 #include "usart_stm32_console.h"
 
-RCC_ClocksTypeDef RCC_Clocks;
-uint16_t idx = 0;
-uint16_t ADC_raw[3];
-VehicleConnect vehicleStatus = DISCONNECTED;
-uint16_t myValueOne = 0;
-uint16_t myValueTwo = 0;
-uint16_t myValueThree = 0;
-uint32_t successfulChangeCounter = 0;
 
-uint16_t EOC_Counter = 0;
-uint16_t EOSEQ_Counter = 0;
+uint16_t idx = 0;
+uint16_t Vdd = 0;
 
 void CONTROLPILOT_STM32_configure(void) {
 
@@ -60,12 +52,12 @@ void CONTROLPILOT_STM32_configure(void) {
     NVIC_Init(&NVIC_InitStructure);
 
     // Activate ADC Interrupts for End of Conversion, End of Sequence
-    ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC);
-    ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ);
-    ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOC, ENABLE);
-    ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOSEQ, ENABLE);
+    //ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC);
+    //ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ);
+    ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_IT_OVR);
+    //ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOC, ENABLE);
+    //ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOSEQ, ENABLE);
     ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_OVR, ENABLE);
-
 
     // Wait until ADC is ready
     while (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_ADRDY) != SET) {}
@@ -77,6 +69,10 @@ void CONTROLPILOT_STM32_configure(void) {
     CONTROLPILOT_STM32_timerLowConfig(CONTROLPILOT_STM32_TIMER_LOW_PERIOD);
     CONTROLPILOT_STM32_timerHighStart();
 
+    // Variable Initialization
+    CONTROLPILOT_STM32_EVSE_ACTIVE_MODE = DISCONNECTED;
+    CONTROLPILOT_STM32_CP_VOLTAGE_LOW = 0;
+    CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = 0;
 
 }
 
@@ -218,23 +214,79 @@ void CONTROLPILOT_STM32_timerThreeStop(void) {
 
 
 void CONTROLPILOT_STM32_getInputVoltage(void) {
-    USART_STM32_sendIntegerToUSART("myValueOne   = ", myValueOne);
-    USART_STM32_sendIntegerToUSART("myValueTwo   = ", myValueTwo);
-    USART_STM32_sendIntegerToUSART("myValueThree = ", myValueThree);
-    USART_STM32_sendIntegerToUSART("EOC_Counter = ", EOC_Counter);
-    EOC_Counter = 0;
-    USART_STM32_sendIntegerToUSART("EOSEQ_Counter = ", EOSEQ_Counter);
-    EOSEQ_Counter = 0;
-    //vehicleStatus = DISCONNECTED;
+
 }
 
 
-void CONTROLPILOT_STM32_startADCConversion(void) {
-    if (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC) != RESET) {
-        if (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC) != RESET) {
-            ADC_StartOfConversion(CONTROLPILOT_STM32_ADC);
-        }
+void CONTROLPILOT_STM32_startADCConversion(CONTROLPILOT_STM32_EVSE_SIDE activeSide) {
+
+    // ADC Data Acquisition Loop
+    ADC1->CR |= ADC_CR_ADSTART;
+    int i = 0;
+    while ((ADC1->ISR & ADC_ISR_EOSEQ) != 8) {
+        while ((ADC1->ISR & ADC_ISR_EOC) != 4) {}
+        ADC_raw[i] = ADC1->DR;
+        i++;
     }
+    ADC1->ISR |= ADC_ISR_EOSEQ;
+
+    // Vdd calculation
+    double Vrefint_cal_float = (double)(*VREFINT_CAL_ADDR);
+    double Vrefint = (double)ADC_raw[2];
+    double Vddfloat = 3300.0 * Vrefint_cal_float / Vrefint;
+
+    // EVSE_IN calculation
+    if (activeSide == HIGH) {
+        double ADCrawFloat = (double)ADC_raw[0];
+        double cpVoltageFloat = Vddfloat * ADCrawFloat / 4095.0;
+        CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = (uint16_t)cpVoltageFloat;
+    } else if (activeSide == LOW) {
+        double ADCrawFloat = (double)ADC_raw[0];
+        double cpVoltageFloat = Vddfloat * ADCrawFloat / 4095.0;
+        CONTROLPILOT_STM32_CP_VOLTAGE_LOW = (uint16_t)cpVoltageFloat;
+    }
+
+}
+
+
+void CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONTROLPILOT_STM32_EVSE_MODE vehicleMode) {
+
+    if (CONTROLPILOT_STM32_EVSE_ACTIVE_MODE == FAULT) {
+        if (vehicleMode == UNFAULTY) {
+            CONTROLPILOT_STM32_EVSE_ACTIVE_MODE = vehicleMode;
+        }
+        return;
+    }
+
+    if (vehicleMode != CONTROLPILOT_STM32_EVSE_ACTIVE_MODE) {
+        CONTROLPILOT_STM32_EVSE_ACTIVE_MODE = vehicleMode;
+        switch (vehicleMode) {
+            case DISCONNECTED:
+                USART_STM32_sendStringToUSART("New Vehicle Mode: DISCONNECTED");
+                break;
+            case CONNECTED_NO_PWM:
+                USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED_NO_PWM");
+                break;
+            case CONNECTED:
+                USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED");
+                break;
+            case CHARGING:
+                USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING");
+                break;
+            case CHARGING_COOLED:
+                USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING_COOLED");
+                break;
+            case FAULT:
+                USART_STM32_sendStringToUSART("New Vehicle Mode: FAULT");
+                break;
+            case UNFAULTY:
+                USART_STM32_sendStringToUSART("New Vehicle Mode: FAULT");
+                break;
+        }
+    } else {
+        // do nothing?
+    }
+
 }
 
 
@@ -242,8 +294,8 @@ void TIM14_IRQHandler(void) {
 
     if (RESET != TIM_GetITStatus(TIM14, TIM_IT_Update)) {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
-        CONTROLPILOT_STM32_startADCConversion();
-        CONTROLPILOT_STM32_getInputVoltage();
+        //USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_LOW = ", CONTROLPILOT_STM32_CP_VOLTAGE_LOW);        
+        //USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = ", CONTROLPILOT_STM32_CP_VOLTAGE_HIGH);        
     }
 
 }
@@ -253,18 +305,28 @@ void TIM16_IRQHandler(void) {
 
     if (RESET != TIM_GetITStatus(CONTROLPILOT_STM32_TIMER_HIGH, TIM_IT_Update)) {
         TIM_ClearITPendingBit(CONTROLPILOT_STM32_TIMER_HIGH, TIM_IT_Update);
-        if (vehicleStatus != DISCONNECTED) { CONTROLPILOT_STM32_timerLowStart(); }
+        if (CONTROLPILOT_STM32_EVSE_ACTIVE_MODE != DISCONNECTED) { CONTROLPILOT_STM32_timerLowStart(); }
         CONTROLPILOT_STM32_setHigh();
-        //CONTROLPILOT_STM32_startADCConversion();
-        if ((myValueOne > 2895) && (myValueOne < 2995)) {
-            successfulChangeCounter++;
+        if (adcDelayCounterHigh > CONTROLPILOT_STM32_ADC_DELAY) {
+            CONTROLPILOT_STM32_startADCConversion(HIGH);
+            adcDelayCounterHigh = 0;
+        } else {
+            adcDelayCounterHigh++;
         }
-        if (successfulChangeCounter == 5000) {
-            successfulChangeCounter = 0;
-            vehicleStatus = CONNECTED;
-            USART_STM32_sendStringToUSART("EVSE: Vehicle connected. PWM started.");
+        switch (CONTROLPILOT_STM32_CP_VOLTAGE_HIGH) {
+            case 3087 ... 3187:
+                CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(DISCONNECTED);
+                break;
+            case 2693 ... 2793:
+                CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONNECTED);
+                break;
+            case 2320 ... 2420:
+                CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CHARGING);
+                break;
+            default:
+                // No Change
+                break;
         }
-
     }
 
 }
@@ -276,66 +338,28 @@ void TIM17_IRQHandler(void) {
         TIM_ClearITPendingBit(CONTROLPILOT_STM32_TIMER_LOW, TIM_IT_Update);
         CONTROLPILOT_STM32_timerLowStop();
 		CONTROLPILOT_STM32_setLow();
+        if (adcDelayCounterLow > CONTROLPILOT_STM32_ADC_DELAY) {
+            CONTROLPILOT_STM32_startADCConversion(LOW);
+            adcDelayCounterLow = 0;
+        } else {
+            adcDelayCounterLow++;
+        }
+        if (CONTROLPILOT_STM32_CP_VOLTAGE_LOW > 150) {
+            //CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(FAULT);
+        } else {
+            //CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(UNFAULTY);
+        }
 	}
 
 }
 
 
-#define IT_STATUS_MODE
-//#define FLAG_STATUS_MODE
-
 void ADC1_IRQHandler(void) {
 
-    #ifdef IT_STATUS_MODE
-    if (ADC_GetITStatus(CONTROLPILOT_STM32_ADC, ADC_IT_EOC) != RESET) {
-        ADC_ClearITPendingBit(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC);
-        ADC_raw[idx] = ADC_GetConversionValue(CONTROLPILOT_STM32_ADC);
-        ADC_raw[idx] = ADC_GetConversionValue(CONTROLPILOT_STM32_ADC);
-        ADC_raw[idx] = ADC_GetConversionValue(CONTROLPILOT_STM32_ADC);
-        idx++;
-        EOC_Counter++;
-    }
-
-    if (ADC_GetITStatus(CONTROLPILOT_STM32_ADC, ADC_IT_EOSEQ) != RESET) {
-        ADC_ClearITPendingBit(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ);
-        myValueOne = ADC_raw[0];
-        myValueTwo = ADC_raw[1];
-        myValueThree = ADC_raw[2];
-        idx = 0;
-        EOSEQ_Counter++;
-    }
     if (ADC_GetITStatus(CONTROLPILOT_STM32_ADC, ADC_IT_OVR) != RESET) {
         ADC_ClearITPendingBit(CONTROLPILOT_STM32_ADC, ADC_IT_OVR);
-        USART_STM32_sendStringToUSART("OVERRUN DETECTED");
-    }
-    #endif
-
-    #ifdef FLAG_STATUS_MODE
-    if (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC) != RESET) {
-        ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC);
-        ADC_raw[idx] = ADC_GetConversionValue(CONTROLPILOT_STM32_ADC);
-        idx++;
-        EOC_Counter++;
+        USART_STM32_sendStringToUSART("ADC_ISR_OVR");
     }
 
-    if (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ) != RESET) {
-        ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ);
-        myValueOne = ADC_raw[0];
-        myValueTwo = ADC_raw[1];
-        myValueThree = ADC_raw[2];
-        idx = 0;
-        EOSEQ_Counter++;
-    }
-    #endif
-
-}
-
-
-void testADEN(void) {
-    if (ADC_GetFlagStatus(ADC1, ADC_FLAG_ADEN)) {
-        USART_STM32_sendStringToUSART("ADC_FLAG_ADEN = 1");
-    } else {
-        USART_STM32_sendStringToUSART("ADC_FLAG_ADEN = 0");
-    }
 }
 

@@ -1,7 +1,8 @@
 // CONTROLPILOT_STM32 library: This library shall enable the J1772 Control Pilot Signal on an STM32F0 chip.
 
 // Type Definitions
-typedef enum { DISCONNECTED = 0, CONNECTED } VehicleConnect;
+typedef enum { DISCONNECTED = 0, CONNECTED_NO_PWM = 1, CONNECTED = 2, CHARGING = 3, CHARGING_COOLED = 4, FAULT = 5, UNFAULTY = 6} CONTROLPILOT_STM32_EVSE_MODE;
+typedef enum { LOW = 0, HIGH = 1} CONTROLPILOT_STM32_EVSE_SIDE;
 
 // GPIO Definitions
 #define    CONTROLPILOT_STM32_GPIO_IN_PERIPH     RCC_AHBPeriph_GPIOA
@@ -29,12 +30,22 @@ typedef enum { DISCONNECTED = 0, CONNECTED } VehicleConnect;
 #define    CONTROLPILOT_STM32_ADC_CHANNEL_EVSE   ADC_Channel_6
 #define    CONTROLPILOT_STM32_ADC_CHANNEL_TEMP   ADC_Channel_TempSensor
 #define    CONTROLPILOT_STM32_ADC_CHANNEL_VREF   ADC_Channel_Vrefint
-#define    CONTROLPILOT_STM32_ADC_SAMPLETIME     ADC_SampleTime_1_5Cycles
+#define    CONTROLPILOT_STM32_ADC_SAMPLETIME     ADC_SampleTime_239_5Cycles
 
-// Variable Definitions
+// Constants Definitions
 #define    CONTROLPILOT_STM32_TIMER_HIGH_PERIOD  999
 #define    CONTROLPILOT_STM32_TIMER_LOW_PERIOD   500
 #define    VREFINT_CAL_ADDR                      ((uint16_t*) ((uint32_t) 0x1ffff7ba))
+#define    CONTROLPILOT_STM32_ADC_DELAY          2
+
+// Variable Definitions
+RCC_ClocksTypeDef                                RCC_Clocks;
+uint16_t                                         ADC_raw[3];
+uint8_t                                          adcDelayCounterHigh;
+uint8_t                                          adcDelayCounterLow;
+CONTROLPILOT_STM32_EVSE_MODE                     CONTROLPILOT_STM32_EVSE_ACTIVE_MODE;
+uint16_t                                         CONTROLPILOT_STM32_CP_VOLTAGE_LOW;
+uint16_t                                         CONTROLPILOT_STM32_CP_VOLTAGE_HIGH;
 
 // Function Definitions
 #define    CONTROLPILOT_STM32_setHigh()          GPIO_SetBits(CONTROLPILOT_STM32_GPIO_OUT_PORT, CONTROLPILOT_STM32_GPIO_OUT_PIN)
@@ -49,10 +60,11 @@ void CONTROLPILOT_STM32_timerLowConfig(uint16_t period);
 void CONTROLPILOT_STM32_timerLowStart(void);
 void CONTROLPILOT_STM32_timerLowStop(void);
 void CONTROLPILOT_STM32_timerLowChangeFrequency(uint16_t period);
-void CONTROLPILOT_STM32_startADCConversion(void);
+void CONTROLPILOT_STM32_startADCConversion(CONTROLPILOT_STM32_EVSE_SIDE activeSide);
 
 // Debug Delcarations
 void CONTROLPILOT_STM32_timerThreeConfig(uint16_t period);
 void CONTROLPILOT_STM32_timerThreeStart(void);
 void CONTROLPILOT_STM32_timerThreeStop(void);
 void testADEN(void);
+void CONTROLPILOT_STM32_getInputVoltage(void);
