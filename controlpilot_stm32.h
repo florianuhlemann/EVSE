@@ -1,8 +1,9 @@
 // CONTROLPILOT_STM32 library: This library shall enable the J1772 Control Pilot Signal on an STM32F0 chip.
 
 // Type Definitions
-typedef enum { DISCONNECTED = 0, CONNECTED_NO_PWM = 1, CONNECTED = 2, CHARGING = 3, CHARGING_COOLED = 4, FAULT = 5, UNFAULTY = 6} CONTROLPILOT_STM32_EVSE_MODE;
-typedef enum { LOW = 0, HIGH = 1} CONTROLPILOT_STM32_EVSE_SIDE;
+typedef enum { DISCONNECTED = 0, CONNECTED_NO_PWM = 1, CONNECTED = 2, CHARGING = 3, CHARGING_COOLED = 4, FAULT = 5 } CONTROLPILOT_STM32_EVSE_MODE;
+typedef enum {          LOW = 0,             HIGH = 1 }                                                              CONTROLPILOT_STM32_EVSE_SIDE;
+typedef enum {     INACTIVE = 0,           ACTIVE = 1 }                                                              CONTROLPILOT_STM32_STATE;
 
 // GPIO Definitions
 #define    CONTROLPILOT_STM32_GPIO_IN_PERIPH     RCC_AHBPeriph_GPIOA
@@ -37,6 +38,7 @@ typedef enum { LOW = 0, HIGH = 1} CONTROLPILOT_STM32_EVSE_SIDE;
 #define    CONTROLPILOT_STM32_TIMER_LOW_PERIOD   500
 #define    VREFINT_CAL_ADDR                      ((uint16_t*) ((uint32_t) 0x1ffff7ba))
 #define    CONTROLPILOT_STM32_ADC_DELAY          2
+#define    CONTROLPILOT_STM32_MODE_DELAY         25
 
 // Variable Definitions
 RCC_ClocksTypeDef                                RCC_Clocks;
@@ -44,8 +46,12 @@ uint16_t                                         ADC_raw[3];
 uint8_t                                          adcDelayCounterHigh;
 uint8_t                                          adcDelayCounterLow;
 CONTROLPILOT_STM32_EVSE_MODE                     CONTROLPILOT_STM32_EVSE_ACTIVE_MODE;
+CONTROLPILOT_STM32_EVSE_MODE                     CONTROLPILOT_STM32_EVSE_REQUESTED_MODE;
+CONTROLPILOT_STM32_STATE                         CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE;
+CONTROLPILOT_STM32_STATE                         CONTROLPILOT_STM32_EVSE_ACTIVE_FAULT_STATE;
 uint16_t                                         CONTROLPILOT_STM32_CP_VOLTAGE_LOW;
 uint16_t                                         CONTROLPILOT_STM32_CP_VOLTAGE_HIGH;
+uint8_t                                          CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER;
 
 // Function Definitions
 #define    CONTROLPILOT_STM32_setHigh()          GPIO_SetBits(CONTROLPILOT_STM32_GPIO_OUT_PORT, CONTROLPILOT_STM32_GPIO_OUT_PIN)
