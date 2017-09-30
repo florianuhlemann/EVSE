@@ -63,6 +63,8 @@ void USART_STM32_sendIntegerToUSART(char const *givenString, uint16_t myInteger)
 
 }
 
+
+/*
 void USART_STM32_sendNegativeIntegerToUSART(char const *givenString, int16_t myInteger) {
 
 	for (int i = 0; i < strlen(givenString); i++) {
@@ -76,3 +78,4 @@ void USART_STM32_sendNegativeIntegerToUSART(char const *givenString, int16_t myI
 	USART_STM32_sendStringToUSART(buffer);
 
 }
+*/

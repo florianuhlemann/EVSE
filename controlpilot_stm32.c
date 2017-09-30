@@ -4,25 +4,25 @@
 #include "helper_stm32.h"
 #include "usart_stm32_console.h"
 
-
-uint16_t idx = 0;
-uint16_t Vdd = 0;
+uint16_t tempValue = 0;
 
 void CONTROLPILOT_STM32_configure(void) {
 
 	// Configure GPIO
     RCC_AHBPeriphClockCmd(CONTROLPILOT_STM32_GPIO_IN_PERIPH, ENABLE);
-	RCC_AHBPeriphClockCmd(CONTROLPILOT_STM32_GPIO_OUT_PERIPH, ENABLE);
+    RCC_AHBPeriphClockCmd(CONTROLPILOT_STM32_GPIO_OUT_PERIPH, ENABLE); //RCC_AHBPeriphClockCmd(CONTROLPILOT_STM32_GPIO_CTCTR_PERIPH, ENABLE);
 	GPIO_InitTypeDef GPIO_InitStructure;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT; //GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+    GPIO_InitStructure.GPIO_Pin = CONTROLPILOT_STM32_GPIO_CTCTR_PIN;
+    GPIO_Init(CONTROLPILOT_STM32_GPIO_CTCTR_PORT, &GPIO_InitStructure);
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_InitStructure.GPIO_Pin = CONTROLPILOT_STM32_GPIO_OUT_PIN;
-	GPIO_Init(CONTROLPILOT_STM32_GPIO_OUT_PORT, &GPIO_InitStructure);
+    GPIO_Init(CONTROLPILOT_STM32_GPIO_OUT_PORT, &GPIO_InitStructure);
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN; //GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
     GPIO_InitStructure.GPIO_Pin = CONTROLPILOT_STM32_GPIO_IN_PIN;
     GPIO_Init(CONTROLPILOT_STM32_GPIO_IN_PORT, &GPIO_InitStructure);
-
 
     // Configure ADC
     RCC_APB2PeriphClockCmd(CONTROLPILOT_STM32_ADC_PERIPH, ENABLE);
@@ -44,6 +44,7 @@ void CONTROLPILOT_STM32_configure(void) {
     USART_STM32_sendIntegerToUSART("ADC Calibration Factor = ", calibrationFactor);
     ADC_Cmd(CONTROLPILOT_STM32_ADC, ENABLE);
 
+    /*
     // Configure Interrupts
     NVIC_InitTypeDef NVIC_InitStructure;
     NVIC_InitStructure.NVIC_IRQChannel = CONTROLPILOT_STM32_ADC_IRQ;
@@ -58,6 +59,7 @@ void CONTROLPILOT_STM32_configure(void) {
     //ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOC, ENABLE);
     //ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOSEQ, ENABLE);
     ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_OVR, ENABLE);
+    */
 
     // Wait until ADC is ready
     while (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_ADRDY) != SET) {}
@@ -132,6 +134,7 @@ void CONTROLPILOT_STM32_timerLowConfig(uint16_t period) {
 }
 
 
+/*
 void CONTROLPILOT_STM32_timerThreeConfig(uint16_t period) {
 
     //Configure Timer
@@ -156,13 +159,7 @@ void CONTROLPILOT_STM32_timerThreeConfig(uint16_t period) {
     TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
 
 }
-
-
-void CONTROLPILOT_STM32_timerLowChangeFrequency(uint16_t period) {
-
-    TIM_SetAutoreload(CONTROLPILOT_STM32_TIMER_LOW,period);
-
-}
+*/
 
 
 void CONTROLPILOT_STM32_timerHighStart(void) {
@@ -199,6 +196,7 @@ void CONTROLPILOT_STM32_timerLowStop(void) {
 }
 
 
+/*
 void CONTROLPILOT_STM32_timerThreeStart(void) {
 
     TIM_ITConfig(TIM14, TIM_IT_Update, ENABLE);
@@ -214,11 +212,7 @@ void CONTROLPILOT_STM32_timerThreeStop(void) {
     TIM_Cmd(TIM14, DISABLE);
 
 }
-
-
-void CONTROLPILOT_STM32_getInputVoltage(void) {
-
-}
+*/
 
 
 void CONTROLPILOT_STM32_startADCConversion(CONTROLPILOT_STM32_EVSE_SIDE activeSide) {
@@ -280,24 +274,30 @@ void CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONTROLPILOT_STM32_EVSE_MODE vehic
         CONTROLPILOT_STM32_EVSE_ACTIVE_MODE = vehicleMode;
         switch (vehicleMode) {
             case DISCONNECTED:
+                CONTROLPILOT_STM32_contactorOff();
                 CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
                 CONTROLPILOT_STM32_CP_VOLTAGE_LOW = 0; // Reset voltage to zero as it's not being measured actively
                 USART_STM32_sendStringToUSART("New Vehicle Mode: DISCONNECTED");
                 break;
             case CONNECTED_NO_PWM:
+                CONTROLPILOT_STM32_contactorOff();
                 CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE;
                 USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED_NO_PWM");
                 break;
             case CONNECTED:
+                CONTROLPILOT_STM32_contactorOff();
                 USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED");
                 break;
             case CHARGING:
+                CONTROLPILOT_STM32_contactorOn();
                 USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING");
                 break;
             case CHARGING_COOLED:
+                CONTROLPILOT_STM32_contactorOff();
                 USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING_COOLED");
                 break;
             case FAULT:
+                CONTROLPILOT_STM32_contactorOff();
                 // Perhaps trigger third timer to retry after x-seconds if fault still exists...
                 CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
                 USART_STM32_sendStringToUSART("New Vehicle Mode: FAULT");
@@ -308,15 +308,29 @@ void CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONTROLPILOT_STM32_EVSE_MODE vehic
 }
 
 
+void CONTROLPILOT_STM32_setChargingCurrent(uint8_t ampereValue) {
+
+    double ampereValueFloat = (double)ampereValue;
+    double trueDutyCycleFloat = ampereValueFloat * 10.0 / 0.6;
+    double calibratedDutyCycleFloat = (trueDutyCycleFloat * 0.9795 + 5.1305);
+    uint16_t calibratedDutyCycle = (uint16_t)calibratedDutyCycleFloat;
+    TIM_SetAutoreload(CONTROLPILOT_STM32_TIMER_LOW, calibratedDutyCycle);
+    USART_STM32_sendIntegerToUSART("calibratedDutyCycle = ", calibratedDutyCycle);
+
+}
+
+
+/*
 void TIM14_IRQHandler(void) {
 
     if (RESET != TIM_GetITStatus(TIM14, TIM_IT_Update)) {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
-        USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_LOW = ", CONTROLPILOT_STM32_CP_VOLTAGE_LOW);        
+        USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_LOW = ", CONTROLPILOT_STM32_CP_VOLTAGE_LOW);
         USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = ", CONTROLPILOT_STM32_CP_VOLTAGE_HIGH);        
     }
 
 }
+*/
 
 
 void TIM16_IRQHandler(void) {
@@ -326,22 +340,42 @@ void TIM16_IRQHandler(void) {
         if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == ACTIVE) { CONTROLPILOT_STM32_timerLowStart(); }
         CONTROLPILOT_STM32_setHigh();
         CONTROLPILOT_STM32_startADCConversion(HIGH);
+
+
+        // Subtract offset if PWM is disabled
+        if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == INACTIVE) {
+            CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = CONTROLPILOT_STM32_CP_VOLTAGE_HIGH - CONTROLPILOT_STM32_ADC_PWM_CORRECTOR;
+        }
+
+
+        /*
+        // Temporary
+        if (tempValue > 1200) {
+            USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_LOW = ", CONTROLPILOT_STM32_CP_VOLTAGE_LOW);
+            USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = ", CONTROLPILOT_STM32_CP_VOLTAGE_HIGH);
+            tempValue = 0;
+        } else {
+            tempValue++;
+        }
+        */
+        
+
         // Checking for PWM_STATE_HIGH by checking voltage against table
         switch (CONTROLPILOT_STM32_CP_VOLTAGE_HIGH) {
-            case 3000 ... 3260:
+            case 2952 ... 3200:
                 CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(DISCONNECTED);
                 break;
-            case 2611 ... 2871:
+            case 2582 ... 2830:
                 if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == INACTIVE) {
                     CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONNECTED_NO_PWM);
                 } else {
                     CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONNECTED);
                 }
                 break;
-            case 2221 ... 2481:
+            case 2212 ... 2459:
                 CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CHARGING);
                 break;
-            case 1831 ... 2092:
+            case 1841 ... 2089:
                 CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CHARGING_COOLED);
                 break;
             default:
@@ -371,7 +405,7 @@ void TIM17_IRQHandler(void) {
 
 }
 
-
+/*
 void ADC1_IRQHandler(void) {
 
     if (ADC_GetITStatus(CONTROLPILOT_STM32_ADC, ADC_IT_OVR) != RESET) {
@@ -380,4 +414,4 @@ void ADC1_IRQHandler(void) {
     }
 
 }
-
+*/

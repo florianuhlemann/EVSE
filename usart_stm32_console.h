@@ -26,4 +26,4 @@
 void USART_STM32_configureInterface(void);
 void USART_STM32_sendStringToUSART(char const *givenString);
 void USART_STM32_sendIntegerToUSART(char const *givenString, uint16_t myInteger);
-void USART_STM32_sendNegativeIntegerToUSART(char const *givenString, int16_t myInteger);
+//void USART_STM32_sendNegativeIntegerToUSART(char const *givenString, int16_t myInteger);
