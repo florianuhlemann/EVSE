@@ -32,7 +32,6 @@ void HELPER_STM32_initSystemClocks(void) {
 	
 }
 
-/*
 void delayMilliseconds (int milliseconds) {
 	uint64_t counter = 2175 * milliseconds; //for 48MHz setting
 	//uint64_t counter = 379 * milliseconds; //for 8MHz setting
@@ -41,7 +40,13 @@ void delayMilliseconds (int milliseconds) {
 		counter--;
 	}
 }
-*/
+
+void delayMicroseconds (int microseconds) {
+	uint64_t counter = microseconds; //for 48MHz setting
+	while (counter > 0) {
+		counter--;
+	}
+}
 
 /*
 void createDisplayBuffer(void) {
