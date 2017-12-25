@@ -16,5 +16,5 @@
 // Function Declarations
 void HELPER_STM32_initSystemClocks(void);
 void delayMilliseconds (int milliseconds);
-void delayMicroseconds(int microseconds);
+//void delayMicroseconds(int microseconds);
 //void createDisplayBuffer(void);

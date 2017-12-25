@@ -16,7 +16,7 @@
 // SPI Definitions
 #define    OLED_SPI_PORT         SPI1
 #define    OLED_SPI_PERIPH       RCC_APB2Periph_SPI1
-#define    OLED_SPI_PRESCALER    SPI_BaudRatePrescaler_4 //2,4,8 works
+#define    OLED_SPI_PRESCALER    SPI_BaudRatePrescaler_4
 #define    OLED_SPI_CPHA         SPI_CPHA_1Edge
 #define    OLED_SPI_CPOL         SPI_CPOL_Low
 #define    OLED_SPI_DATASIZE     SPI_DataSize_8b
@@ -69,3 +69,5 @@ void OLED_STM32_configureInterface(void);
 void OLED_STM32_initDisplay(void);
 void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberOfElements);
 void OLED_STM32_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal);
+void OLED_STM32_generateBuffer(uint8_t xOffset, uint8_t yOffset, uint8_t pixelArray[], uint8_t arrayLength);
+void OLED_STM32_updateDisplay(void);

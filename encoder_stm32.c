@@ -1,7 +1,7 @@
 #include "stm32f0xx.h"
 #include "usart_stm32_console.h"
 #include "encoder_stm32.h"
-#include <stdio.h>
+//#include <stdio.h>
 
 
 volatile Boolean CLK_Active = INACTIVE;
@@ -14,6 +14,12 @@ volatile uint8_t ampSetting = 24;
 volatile uint8_t CLK_Previous_State = 0;
 volatile uint8_t DT_Previous_State = 0;
 volatile Direction direction = FORWARD;
+volatile uint8_t previousAmpSetting = 24;
+volatile uint8_t previousAmpDirection = 0;
+volatile uint8_t currentAmpSetting = 24;
+volatile uint8_t currentAmpDirection = 0;
+Boolean isSetupModeActive = INACTIVE;
+
 
 void ENCODER_STM32_configureInterface(void) {
 	ENCODER_STM32_initInterruptCLK();
@@ -111,13 +117,45 @@ void ENCODER_STM32_initInterruptSW(void) {
 }
 
 
+void ENCODER_STM32_initTIM3(void) {
+	RCC_ClocksTypeDef RCC_Clocks;
+    RCC_GetClocksFreq(&RCC_Clocks);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+	uint16_t myPrescalerValue = (RCC_Clocks.PCLK_Frequency / 1000) - 1;
+	uint16_t period = 1500;
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+	TIM_TimeBaseStructure.TIM_Prescaler = myPrescalerValue - 1;
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseStructure.TIM_Period = period;
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+	NVIC_InitTypeDef NVIC_InitStructure;
+	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_InitStructure.NVIC_IRQChannelPriority = 0x03;
+	NVIC_Init(&NVIC_InitStructure);
+	TIM_SetCounter(TIM3, 0);
+	TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
+}
+
+
+void ENCODER_STM32_startTIM3(void) {
+	TIM_SetCounter(TIM3, 0);
+	TIM_Cmd(TIM3, ENABLE);
+}
+
+
+void ENCODER_STM32_stopTIM3(void) {
+	TIM_Cmd(TIM3, DISABLE);
+}
+
+
 void ENCODER_STM32_updateAmpSetting(void) {
 
 	if (counter / 3 != ampSetting) {
 		ampSetting = counter / 3;
-		char str[20];
-		sprintf(str, "Ampere = %d", counter / 3);
-		//USART_STM32_sendToUSART(str);
+		USART_STM32_sendIntegerToUSART("Current Ampere = ", ampSetting);
 	}
 
 }
@@ -138,20 +176,20 @@ void ENCODER_STM32_updateCounter(uint16_t stateConfig) {
 
 	// left turns
 	if ( stateConfig == 24 || stateConfig == 35 || stateConfig == 40 || stateConfig == 51 || stateConfig == 56 ) {
-		if (counter > 1) {
+		if (counter > 3) {
 			counter = counter - 1;
 		} else {
-			counter = 0;
+			counter = 3;
 		}
 	}
 	// right turns
 	if ( stateConfig == 20 || stateConfig == 36 || stateConfig == 52 || stateConfig == 55 || stateConfig == 57 ) {
-		if (counter < 95) {
+		if (counter < 71) {
 			counter = counter + 2;
-		} else if (counter < 96) {
+		} else if (counter < 72) {
 			counter = counter + 1;
 		} else {
-			counter = 96;
+			counter = 72;
 		}
 	}
 	ENCODER_STM32_updateAmpSetting();
@@ -184,8 +222,62 @@ void EXTI2_3_IRQHandler(void) {
 void EXTI4_15_IRQHandler(void) {
 
 	if(EXTI_GetITStatus(EXTI_Line4) != RESET) {
-		//USART_STM32_sendToUSART("SW pushed.");
+		ENCODER_STM32_startTIM3();
+
+		if (isSetupModeActive == ACTIVE) {
+			if (previousAmpDirection == 0) { //need to catch case when preloaded value is 1, then direction needs to be 1
+				previousAmpSetting--;
+				if (previousAmpSetting == 1) {
+					previousAmpDirection = 1;
+				}
+			} else {
+				previousAmpSetting++;
+				if (previousAmpSetting == MAXIMUM_AMPERE) {
+					previousAmpDirection = 0;
+				}
+			}
+			USART_STM32_sendIntegerToUSART("The current setting is = ", previousAmpSetting);
+		} else {
+			if (currentAmpDirection == 0) {
+				currentAmpSetting--;
+				if (currentAmpSetting == 1) {
+					currentAmpDirection = 1;
+				}
+			} else {
+				currentAmpSetting++;
+				if (currentAmpSetting == MAXIMUM_AMPERE) {
+					currentAmpDirection = 0;
+				}
+			}
+			USART_STM32_sendIntegerToUSART("currentAmpSetting = ", currentAmpSetting);
+		}
+
 		EXTI_ClearITPendingBit(EXTI_Line4);
 	}
 
 }
+
+
+void TIM3_IRQHandler(void) {
+	if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) {
+		ENCODER_STM32_stopTIM3();
+		if (GPIO_ReadInputDataBit(ENCODER_GPIO_PORT, GPIO_Pin_4) != SET) {
+			if (isSetupModeActive == INACTIVE) {
+				isSetupModeActive = ACTIVE;
+				USART_STM32_sendStringToUSART("You have entered the setup mode. Please select the default setting.");
+				USART_STM32_sendIntegerToUSART("The current setting is = ", previousAmpSetting);
+			} else {
+				isSetupModeActive = ACTIVE;
+				USART_STM32_sendStringToUSART("You finished the setup mode. Your value has been saved.");
+				USART_STM32_sendIntegerToUSART("The new maximum setting is = ", previousAmpSetting);
+			}
+		}
+        TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+	}
+}
+
+
+void checkForSetupMode(void) {
+
+}
+

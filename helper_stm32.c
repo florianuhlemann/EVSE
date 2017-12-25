@@ -27,7 +27,7 @@ void HELPER_STM32_initSystemClocks(void) {
 	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
 	RCC_HCLKConfig(RCC_SYSCLK_Div1);
 	RCC_PCLKConfig(RCC_HCLK_Div1);
-	RCC_ADCCLKConfig(RCC_ADCCLK_HSI14);
+	//RCC_ADCCLKConfig(RCC_ADCCLK_HSI14);
 	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK); //useful?
 	
 }
@@ -41,12 +41,14 @@ void delayMilliseconds (int milliseconds) {
 	}
 }
 
+/*
 void delayMicroseconds (int microseconds) {
 	uint64_t counter = microseconds; //for 48MHz setting
 	while (counter > 0) {
 		counter--;
 	}
 }
+*/
 
 /*
 void createDisplayBuffer(void) {

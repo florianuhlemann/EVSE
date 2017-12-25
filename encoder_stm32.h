@@ -30,6 +30,7 @@ typedef enum {ACTIVE = 0, INACTIVE = 1} Boolean;
 typedef enum {FORWARD = 0, REVERSE = 1} Direction;
 
 // Parameter Definitions
+#define    MAXIMUM_AMPERE          24
 
 // Function Definitions
 
@@ -41,3 +42,6 @@ void ENCODER_STM32_initInterruptSW(void);
 uint16_t ENCODER_STM32_stateConfig(void);
 void ENCODER_STM32_updateCounter(uint16_t stateConfig);
 void ENCODER_STM32_updateAmpSetting(void);
+void ENCODER_STM32_initTIM3(void);
+void ENCODER_STM32_startTIM3(void);
+void ENCODER_STM32_stopTIM3(void);

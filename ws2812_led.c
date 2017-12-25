@@ -1,6 +1,6 @@
 #include "stm32f0xx.h"
 #include "ws2812_led.h"
-#include "helper_stm32.h"
+//#include "helper_stm32.h"
 #include <math.h>
 
 uint8_t colorArray[WS2812_NUM_LEDS][3];
@@ -34,6 +34,13 @@ void WS2812_STM32_setRGB(uint8_t id, uint8_t red, uint8_t green, uint8_t blue) {
 	colorArray[id][1] = red;
 	colorArray[id][2] = blue;
 
+}
+
+void WS2812_STM32_setNumberOfLED(uint8_t numberOfLED) {
+	for (int i = 0; i < WS2812_NUM_LEDS; i++) {
+		WS2812_STM32_setRGB(i, 10, 20, 40);
+	}
+	WS2812_STM32_sendToLED();	
 }
 
 void WS2812_STM32_sendToLED(void) {

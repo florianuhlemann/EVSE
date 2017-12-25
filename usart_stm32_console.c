@@ -46,6 +46,7 @@ void USART_STM32_sendStringToUSART(char const *givenString) {
 	while(USART_GetFlagStatus(USART_STM32_USART_PORT, USART_FLAG_TC) == RESET) {
 			// wait for buffer to clear
 	}
+
 }
 
 
@@ -63,19 +64,3 @@ void USART_STM32_sendIntegerToUSART(char const *givenString, uint16_t myInteger)
 
 }
 
-
-/*
-void USART_STM32_sendNegativeIntegerToUSART(char const *givenString, int16_t myInteger) {
-
-	for (int i = 0; i < strlen(givenString); i++) {
-		USART_SendData(USART_STM32_USART_PORT, givenString[i]);
-		while(USART_GetFlagStatus(USART_STM32_USART_PORT, USART_FLAG_TC) == RESET) {
-			// wait for buffer to clear
-		}
-	}
-	char buffer[8];
-	itoa(myInteger,buffer,10);
-	USART_STM32_sendStringToUSART(buffer);
-
-}
-*/
