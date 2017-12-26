@@ -17,7 +17,7 @@
 #define    ENCODER_EXTI_SW_LINE    EXTI_Line4
 #define    ENCODER_EXTI_PERIPH     RCC_APB2Periph_SYSCFG
 #define    ENCODER_EXTI_MODE       EXTI_Mode_Interrupt
-#define    ENCODER_EXTI_TRIGGER    EXTI_Trigger_Falling
+#define    ENCODER_EXTI_TRIGGER    EXTI_Trigger_Rising_Falling
 
 // NVIC Definitions
 #define    ENCODER_NVIC_CLK_CHA    EXTI0_1_IRQn
@@ -25,22 +25,23 @@
 #define    ENCODER_NVIC_SW_CHA     EXTI4_15_IRQn
 #define    ENCODER_NVIC_PRIORITY   0x03
 
-// Variable Definitions
+// Type Definitions
 typedef enum {ACTIVE = 0, INACTIVE = 1} Boolean;
-typedef enum {FORWARD = 0, REVERSE = 1} Direction;
 
-// Parameter Definitions
-#define    MAXIMUM_AMPERE          24
+// Variable Definitions
+#define    ENCODER_STM32_STEP      60
 
-// Function Definitions
+// Variable Declarations
+uint8_t maximumAmpere;
 
 // Function Declarations
+uint8_t ENCODER_STM32_getAmpere(void);
+void ENCODER_STM32_setAmpere(uint8_t newAmpere);
 void ENCODER_STM32_configureInterface(void);
 void ENCODER_STM32_initInterruptCLK(void);
 void ENCODER_STM32_initInterruptDT(void);
 void ENCODER_STM32_initInterruptSW(void);
-uint16_t ENCODER_STM32_stateConfig(void);
-void ENCODER_STM32_updateCounter(uint16_t stateConfig);
+void ENCODER_STM32_updateCounter(void);
 void ENCODER_STM32_updateAmpSetting(void);
 void ENCODER_STM32_initTIM3(void);
 void ENCODER_STM32_startTIM3(void);
