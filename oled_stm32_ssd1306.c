@@ -1,6 +1,8 @@
 #include "stm32f0xx.h"
 #include "oled_stm32_ssd1306.h"
 #include "helper_stm32.h"
+#include "font8x8_basic.h"
+#include <math.h>
 
 
 // Variable Declarations
@@ -140,6 +142,32 @@ void OLED_STM32_generateBuffer(uint8_t xOffset, uint8_t yOffset, uint8_t pixelAr
 			}
 		}
 	}
+
+}
+
+
+void OLED_STM32_drawChar(uint8_t xPos, uint8_t yPos, const char* myChar) {
+	uint8_t fontHeight = 8;
+	uint8_t fontWidth = 8;
+	uint8_t fontArrayLength = fontHeight * fontWidth + 2;
+	uint8_t FontArray[fontArrayLength];
+	FontArray[0] = fontHeight;
+	FontArray[1] = fontWidth;
+	uint8_t counter = 2;
+	for (int i = 0; i < fontHeight; i++) {
+		for (int j = 0; j < fontWidth; j++) {
+			FontArray[counter] = (font8x8_basic[(uint8_t)myChar[0]][i] & (1<<j)) / pow(2,j);
+			counter++;
+		}
+	}
+	OLED_STM32_generateBuffer(xPos,yPos,FontArray,fontArrayLength);
+	OLED_STM32_updateDisplay();
+}
+
+
+void OLED_STM32_drawString(uint8_t xPos, uint8_t yPos, const char* myChar) {
+	
+	// next step is to analyze the given string, then print each character, and increase x counter for next letter.
 
 }
 

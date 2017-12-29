@@ -73,3 +73,4 @@ void OLED_STM32_generateBuffer(uint8_t xOffset, uint8_t yOffset, uint8_t pixelAr
 void OLED_STM32_updateDisplay(void);
 void OLED_STM32_drawPixel(uint8_t x, uint8_t y);
 void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd);
+void OLED_STM32_drawChar(uint8_t xPos, uint8_t yPos, const char* myChar);
