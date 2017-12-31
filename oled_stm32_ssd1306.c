@@ -8,8 +8,6 @@
 // Variable Declarations
 uint8_t OLED_STM32_commandBuffer[COMMAND_BUFFER_LENGTH] = {OLED_DISPLAYOFF, OLED_SETCLOCKDIV, OLED_CLOCKDIVSETTING, OLED_SETMULTIPLEX, OLED_MULTIPLEXSETTING, OLED_SETDISPLAYOFFSET, OLED_DISPLAYOFFSET, OLED_SETSTARTLINE, OLED_CHGPUMPSETTING, OLED_SETCHGPUMP, OLED_SETADDRESSMODE, OLED_HORZPAGEMODE, OLED_SEGMENTREMAP, OLED_SCANDIRECTION, OLED_SETCOMPINS, OLED_COMPINSSETTING, OLED_SETCONTRAST, OLED_CONTRASTSETTING, OLED_SETPRECHGPERIOD, OLED_PRECHGPERIOD, OLED_SETVCOMHDESELECT, OLED_VCOMHDESELECTLVL, OLED_DISABLESCROLL, OLED_FULLDISPLAYOFF, OLED_SETNORMALDISPLAY, OLED_DISPLAYON};
 uint8_t OLED_STM32_displayBuffer[DISPLAY_BUFFER_LENGTH];
-uint32_t CurrentX = 0;
-uint32_t CurrentY = 0;
 
 
 void OLED_STM32_configureInterface(void) {
@@ -103,6 +101,7 @@ void OLED_STM32_digitalWrite(uint16_t GPIO_Pin, BitAction BitVal) {
 }
 
 
+// This function send the current array of the OLED buffer to the device over SPI.
 void OLED_STM32_updateDisplay(void) {
 
 	OLED_STM32_digitalWrite(OLED_CS_PIN, LOW);
@@ -112,6 +111,8 @@ void OLED_STM32_updateDisplay(void) {
 }
 
 
+// This function clears the array of the OLED buffer.
+// The OLED buffer needs to be sent when drawing is completed by another call.
 void OLED_STM32_clearDisplay(void) {
 
 	for (int i = 0; i < DISPLAY_BUFFER_LENGTH; i++) { OLED_STM32_displayBuffer[i] = 0; }
@@ -120,6 +121,8 @@ void OLED_STM32_clearDisplay(void) {
 }
 
 
+// This function can place an individual pixel as active into the array of the OLED buffer.
+// The OLED buffer needs to be sent when drawing is completed by another call.
 void OLED_STM32_drawPixel(uint8_t x, uint8_t y) {
 
 	if ((x < OLED_DISPLAY_WIDTH) && (y < OLED_DISPLAY_HEIGHT)) {
@@ -129,13 +132,7 @@ void OLED_STM32_drawPixel(uint8_t x, uint8_t y) {
 }
 
 
-/*
-void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd) {
-}
-*/
-
-
-// This function is drawing each 8x8 character glyph into the array of the OLED buffer.
+// This function is drawing each 8px tall character glyph into the array of the OLED buffer.
 // The OLED buffer needs to be sent when drawing is completed by another call.
 void OLED_STM32_drawMonospaceCharacter(uint8_t xPosOffset, uint8_t yPosOffset, uint8_t myChar) {
 	
@@ -149,8 +146,8 @@ void OLED_STM32_drawMonospaceCharacter(uint8_t xPosOffset, uint8_t yPosOffset, u
 }
 
 
-// This function takes the given string, checks for non-'\n' characters and advances the x-Position by 8.
-// When the full string is drawn, the OLED updated OLED buffer is sent to the device.
+// This function takes the given string, checks for non-'\n' characters and advances the x-Position by the width of the glyph.
+// When the full string is drawn, the updated OLED buffer is sent to the device.
 void OLED_STM32_drawMonospaceString(uint8_t xPos, uint8_t yPos, const char* myString) {
 
 	int counter = 0;
@@ -180,3 +177,13 @@ void OLED_STM32_drawMonospaceString(uint8_t xPos, uint8_t yPos, const char* mySt
 	OLED_STM32_updateDisplay();
 
 } */
+
+
+/*
+void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd) {
+
+	// Do something to create a line. Diagonal is tricky.
+
+}
+*/
+

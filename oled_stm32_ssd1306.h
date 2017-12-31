@@ -1,5 +1,6 @@
 // OLED_STM32_OLED_STM32 library: This library shall enable interfacing an OLED_STM32 OLED based display on an STM32F0 chip.
 
+
 // Pin Definitions
 #define    OLED_GPIO_PORT1       GPIOA
 #define    OLED_RCC_PERIPH1      RCC_AHBPeriph_GPIOA
@@ -12,6 +13,7 @@
 #define    OLED_GPIO_PORT2       GPIOB
 #define    OLED_RCC_PERIPH2      RCC_AHBPeriph_GPIOB
 #define    OLED_CS_PIN           GPIO_Pin_1
+
 
 // SPI Definitions
 #define    OLED_SPI_PORT         SPI1
@@ -26,6 +28,7 @@
 #define    OLED_SPI_COMMAND      0x00
 #define    OLED_SPI_DATA         0x01
 
+
 // Variable Definitions
 #define    OLED_DISPLAY_WIDTH    128
 #define    OLED_DISPLAY_HEIGHT   64
@@ -33,6 +36,7 @@
 #define    LOW                   Bit_RESET
 #define    COMMAND_BUFFER_LENGTH 26
 #define    DISPLAY_BUFFER_LENGTH OLED_DISPLAY_WIDTH * OLED_DISPLAY_HEIGHT / 8
+
 
 // Parameter Definitions in correct order
 #define    OLED_DISPLAYOFF       0xAE // turn display off
@@ -62,7 +66,6 @@
 #define    OLED_SETNORMALDISPLAY 0xA6 // set non-inverted display
 #define    OLED_DISPLAYON        0xAF // Turn display on
 
-// Function Definitions
 
 // Function Declarations
 void OLED_STM32_configureInterface(void);
@@ -73,7 +76,8 @@ void OLED_STM32_generateBuffer(uint8_t xOffset, uint8_t yOffset, uint8_t pixelAr
 void OLED_STM32_updateDisplay(void);
 void OLED_STM32_clearDisplay(void);
 void OLED_STM32_drawPixel(uint8_t x, uint8_t y);
-//void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd);
 void OLED_STM32_drawMonospaceCharacter(uint8_t xPosOffset, uint8_t yPosOffset, uint8_t myChar);
 void OLED_STM32_drawMonospaceString(uint8_t xPos, uint8_t yPos, const char* myString);
 //void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset);
+//void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd);
+
