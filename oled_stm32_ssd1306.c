@@ -8,14 +8,6 @@
 // Variable Declarations
 uint8_t OLED_STM32_commandBuffer[COMMAND_BUFFER_LENGTH] = {OLED_DISPLAYOFF, OLED_SETCLOCKDIV, OLED_CLOCKDIVSETTING, OLED_SETMULTIPLEX, OLED_MULTIPLEXSETTING, OLED_SETDISPLAYOFFSET, OLED_DISPLAYOFFSET, OLED_SETSTARTLINE, OLED_CHGPUMPSETTING, OLED_SETCHGPUMP, OLED_SETADDRESSMODE, OLED_HORZPAGEMODE, OLED_SEGMENTREMAP, OLED_SCANDIRECTION, OLED_SETCOMPINS, OLED_COMPINSSETTING, OLED_SETCONTRAST, OLED_CONTRASTSETTING, OLED_SETPRECHGPERIOD, OLED_PRECHGPERIOD, OLED_SETVCOMHDESELECT, OLED_VCOMHDESELECTLVL, OLED_DISABLESCROLL, OLED_FULLDISPLAYOFF, OLED_SETNORMALDISPLAY, OLED_DISPLAYON};
 uint8_t OLED_STM32_displayBuffer[DISPLAY_BUFFER_LENGTH];
-
- // = {255, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 240, 248, 28, 28, 252, 248, 0, 0, 192, 224, 112, 56, 248, 248, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 224, 112, 56, 248, 248, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 192, 224, 224, 32, 0, 0, 0, 0, 192, 224, 224, 0, 192, 192, 224, 224, 192, 0, 128, 192, 224, 224, 224, 0, 0, 0, 192, 224, 224, 0, 0, 128, 224, 224, 32, 0, 0, 192, 224, 224, 0, 128, 192, 224, 224, 224, 0, 0, 240, 255, 255, 207, 224, 56, 31, 111, 225, 224, 254, 255, 255, 248, 252, 111, 99, 96, 128, 192, 192, 224, 224, 224, 192, 192, 0, 0, 0, 0, 0, 192, 224, 224, 32, 0, 0, 96, 224, 224, 254, 255, 255, 248, 252, 111, 99, 96, 230, 239, 239, 15, 2, 0, 128, 192, 224, 224, 224, 224, 192, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 96, 112, 60, 223, 199, 207, 255, 252, 248, 192, 224, 126, 255, 255, 62, 7, 1, 125, 255, 255, 62, 7, 1, 121, 255, 255, 227, 224, 112, 62, 255, 255, 225, 112, 28, 255, 255, 231, 224, 96, 126, 255, 255, 60, 7, 3, 1, 15, 31, 31, 12, 254, 255, 255, 3, 253, 252, 12, 28, 12, 12, 31, 127, 127, 240, 224, 224, 224, 96, 126, 255, 255, 227, 224, 112, 127, 255, 255, 224, 96, 112, 60, 223, 199, 207, 255, 252, 248, 192, 224, 112, 63, 127, 127, 240, 224, 224, 224, 96, 126, 255, 255, 225, 224, 112, 63, 127, 255, 224, 224, 227, 227, 97, 112, 56, 24, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 127, 255, 240, 224, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255};
-
-// Command = D/C LOW
-// Data = D/C HIGH
-// delay before during and after reset 100ms
-// displayBuffer has value 0-255 for 8 lines with bitshift
-
 uint32_t CurrentX = 0;
 uint32_t CurrentY = 0;
 
@@ -120,6 +112,14 @@ void OLED_STM32_updateDisplay(void) {
 }
 
 
+void OLED_STM32_clearDisplay(void) {
+
+	for (int i = 0; i < DISPLAY_BUFFER_LENGTH; i++) { OLED_STM32_displayBuffer[i] = 0; }
+	//OLED_STM32_updateDisplay();
+
+}
+
+
 void OLED_STM32_drawPixel(uint8_t x, uint8_t y) {
 
 	if ((x < OLED_DISPLAY_WIDTH) && (y < OLED_DISPLAY_HEIGHT)) {
@@ -129,45 +129,54 @@ void OLED_STM32_drawPixel(uint8_t x, uint8_t y) {
 }
 
 
+/*
 void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd) {
 }
+*/
 
 
-void OLED_STM32_generateBuffer(uint8_t xOffset, uint8_t yOffset, uint8_t pixelArray[], uint8_t arrayLength) {
+// This function is drawing each 8x8 character glyph into the array of the OLED buffer.
+// The OLED buffer needs to be sent when drawing is completed by another call.
+void OLED_STM32_drawMonospaceCharacter(uint8_t xPosOffset, uint8_t yPosOffset, uint8_t myChar) {
+	
+	for (int yPos = 0; yPos < 8; yPos++) {
+		for (int xPos = 0; xPos < 8; xPos++) {
+			uint8_t myValue = (monospaceFont[myChar-32][yPos] & (1<<xPos)) / (pow(2, xPos));
+			if (myValue == 1) { OLED_STM32_drawPixel(xPos + xPosOffset, yPos + yPosOffset); }
+		}
+	}
 
-	for (int x = 0; x < pixelArray[1]; x++) {
-		for (int y = 0; y < pixelArray[0]; y++) {
-			if (pixelArray[y * pixelArray[1] + x + 2]) {
-				OLED_STM32_drawPixel(x + xOffset, y + yOffset);
+}
+
+
+// This function takes the given string, checks for non-'\n' characters and advances the x-Position by 8.
+// When the full string is drawn, the OLED updated OLED buffer is sent to the device.
+void OLED_STM32_drawMonospaceString(uint8_t xPos, uint8_t yPos, const char* myString) {
+
+	int counter = 0;
+	uint8_t currentPosX = xPos;
+	while (myString[counter] != 0) {
+		OLED_STM32_drawMonospaceCharacter(currentPosX, yPos, myString[counter]);
+		currentPosX += monospaceFontWidth[myString[counter] - 32];
+		counter++;
+	}
+	OLED_STM32_updateDisplay();
+	
+}
+
+
+/* void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset) {
+
+	uint8_t correctionFactor = 0;
+	if (image_width % 8 > 0) { correctionFactor = 1; }
+	for (int yPos = 0; yPos < image_height; yPos++) {
+		for (int xPos = 0; xPos < image_width; xPos++) {
+			uint16_t currentBit = xPos / 8 + (yPos * (image_width / 8 + correctionFactor));
+			uint8_t currentBitMask = 1 << xPos % 8;
+			uint8_t myValue = (image_bits[currentBit] & currentBitMask) / currentBitMask;
+			if (myValue) { OLED_STM32_drawPixel(xPos + xPosOffset, yPos + yPosOffset); }
 			}
 		}
-	}
-
-}
-
-
-void OLED_STM32_drawChar(uint8_t xPos, uint8_t yPos, const char* myChar) {
-	uint8_t fontHeight = 8;
-	uint8_t fontWidth = 8;
-	uint8_t fontArrayLength = fontHeight * fontWidth + 2;
-	uint8_t FontArray[fontArrayLength];
-	FontArray[0] = fontHeight;
-	FontArray[1] = fontWidth;
-	uint8_t counter = 2;
-	for (int i = 0; i < fontHeight; i++) {
-		for (int j = 0; j < fontWidth; j++) {
-			FontArray[counter] = (font8x8_basic[(uint8_t)myChar[0]][i] & (1<<j)) / pow(2,j);
-			counter++;
-		}
-	}
-	OLED_STM32_generateBuffer(xPos,yPos,FontArray,fontArrayLength);
 	OLED_STM32_updateDisplay();
-}
 
-
-void OLED_STM32_drawString(uint8_t xPos, uint8_t yPos, const char* myChar) {
-	
-	// next step is to analyze the given string, then print each character, and increase x counter for next letter.
-
-}
-
+} */
