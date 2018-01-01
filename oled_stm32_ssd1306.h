@@ -1,5 +1,10 @@
 // OLED_STM32_OLED_STM32 library: This library shall enable interfacing an OLED_STM32 OLED based display on an STM32F0 chip.
 
+// Type Definitions
+#ifndef EVSEMODE_H
+#define EVSEMODE_H
+typedef enum { DISCONNECTED = 0, CONNECTED_NO_PWM = 1, CONNECTED = 2, CHARGING = 3, CHARGING_COOLED = 4, FAULT = 5 } CONTROLPILOT_STM32_EVSE_MODE;
+#endif /* EVSEMODE_H */
 
 // Pin Definitions
 #define    OLED_GPIO_PORT1       GPIOA
@@ -76,10 +81,11 @@ void OLED_STM32_generateBuffer(uint8_t xOffset, uint8_t yOffset, uint8_t pixelAr
 void OLED_STM32_updateDisplay(void);
 void OLED_STM32_clearDisplay(void);
 void OLED_STM32_drawPixel(uint8_t x, uint8_t y);
+void OLED_STM32_updateMainView(uint8_t currentAmpere, CONTROLPILOT_STM32_EVSE_MODE currentMode);
 void OLED_STM32_drawMonospaceCharacter(uint8_t xPosOffset, uint8_t yPosOffset, uint8_t myChar);
 void OLED_STM32_drawMonospaceString(uint8_t xPos, uint8_t yPos, const char* myString);
 uint8_t OLED_STM32_getMonospaceGlyphIndex(uint8_t charIndex);
-void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset);
+//void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset);
 void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd);
 void OLED_STM32_drawLargeCharacter(uint8_t xPosOffset, uint8_t yPosOffset, uint8_t myChar);
 void OLED_STM32_drawLargeString(uint8_t xPos, uint8_t yPos, const char* myString);

@@ -1,7 +1,10 @@
 // CONTROLPILOT_STM32 library: This library shall enable the J1772 Control Pilot Signal on an STM32F0 chip.
 
 // Type Definitions
+#ifndef EVSEMODE_H
+#define EVSEMODE_H
 typedef enum { DISCONNECTED = 0, CONNECTED_NO_PWM = 1, CONNECTED = 2, CHARGING = 3, CHARGING_COOLED = 4, FAULT = 5 } CONTROLPILOT_STM32_EVSE_MODE;
+#endif /* EVSEMODE_H */
 typedef enum {          LOW = 0,             HIGH = 1 }                                                              CONTROLPILOT_STM32_EVSE_SIDE;
 typedef enum {     INACTIVE = 0,           ACTIVE = 1 }                                                              CONTROLPILOT_STM32_STATE;
 

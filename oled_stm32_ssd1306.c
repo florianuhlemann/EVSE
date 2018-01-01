@@ -3,6 +3,7 @@
 #include "helper_stm32.h"
 #include "font8x8_basic.h"
 #include <math.h>
+#include <stdio.h>
 
 
 // Variable Declarations
@@ -116,7 +117,6 @@ void OLED_STM32_updateDisplay(void) {
 void OLED_STM32_clearDisplay(void) {
 
 	for (int i = 0; i < DISPLAY_BUFFER_LENGTH; i++) { OLED_STM32_displayBuffer[i] = 0; }
-	//OLED_STM32_updateDisplay();
 
 }
 
@@ -128,6 +128,42 @@ void OLED_STM32_drawPixel(uint8_t x, uint8_t y) {
 	if ((x < OLED_DISPLAY_WIDTH) && (y < OLED_DISPLAY_HEIGHT)) {
 		OLED_STM32_displayBuffer[x + (y / 8) * OLED_DISPLAY_WIDTH] |= 1 << (y % 8);
 	}
+
+}
+
+
+// This function will update the display to represent the main view of the system.
+void OLED_STM32_updateMainView(uint8_t currentAmpere, CONTROLPILOT_STM32_EVSE_MODE currentMode) {
+
+	OLED_STM32_clearDisplay();
+	OLED_STM32_drawLine(0,9,127,9);
+	OLED_STM32_drawLine(0,53,127,53);
+	OLED_STM32_drawMonospaceString(20,56,"+");
+	OLED_STM32_drawMonospaceString(46,56,"Eingabe");
+	OLED_STM32_drawMonospaceString(105,56,"-");
+	char maxAmpStr[4];
+	uint8_t maximumAmpereSetting = 32;
+	snprintf(maxAmpStr, sizeof(maxAmpStr), "%dA", maximumAmpereSetting);
+	OLED_STM32_drawMonospaceString(0,0,maxAmpStr);
+	uint8_t offsetValue = 0;
+	switch (currentMode) {
+		case DISCONNECTED: offsetValue = 37; OLED_STM32_drawMonospaceString(48+offsetValue, 0, "Getrennt"); break;
+		case CONNECTED_NO_PWM: offsetValue = 29; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Verbunden"); break;
+		case CONNECTED: offsetValue = 29; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Verbunden"); break;
+		case CHARGING: offsetValue = 16; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Ladevorgang"); break;
+		case CHARGING_COOLED: offsetValue = 44; OLED_STM32_drawMonospaceString(48+offsetValue,0,"K\xfchlung"); break;
+		case FAULT: offsetValue = 11; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Fehlermeldung"); break;
+	}
+	char str[3];
+	if (currentAmpere < 10) {
+		offsetValue = 20;
+	} else {
+		offsetValue = 0;
+	}
+	snprintf(str, sizeof(str), "%d", currentAmpere);
+	OLED_STM32_drawLargeString(32+offsetValue,18,str);
+	OLED_STM32_drawLargeString(76,18,"A");
+	OLED_STM32_updateDisplay();
 
 }
 
@@ -157,7 +193,6 @@ void OLED_STM32_drawMonospaceString(uint8_t xPos, uint8_t yPos, const char* mySt
 		currentPosX += monospaceFontWidth[OLED_STM32_getMonospaceGlyphIndex(myString[counter])];
 		counter++;
 	}
-	OLED_STM32_updateDisplay();
 	
 }
 
@@ -179,6 +214,7 @@ uint8_t OLED_STM32_getMonospaceGlyphIndex(uint8_t charIndex) {
 }
 
 
+/*
 void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset) {
 
 	uint8_t correctionFactor = 0;
@@ -191,9 +227,9 @@ void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset) {
 			if (myValue) { OLED_STM32_drawPixel(xPos + xPosOffset, yPos + yPosOffset); }
 		}
 	}
-	OLED_STM32_updateDisplay();
 
 }
+*/
 
 
 void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd) {
@@ -241,7 +277,6 @@ void OLED_STM32_drawLargeString(uint8_t xPos, uint8_t yPos, const char* myString
 		currentPosX += latoGlyphWidth[OLED_STM32_getLargeGlyphIndex(myString[counter])] + latoGlyphOffset[OLED_STM32_getLargeGlyphIndex(myString[counter])];
 		counter++;
 	}
-	OLED_STM32_updateDisplay();
 	
 }
 
