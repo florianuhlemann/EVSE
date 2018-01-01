@@ -138,7 +138,7 @@ void OLED_STM32_drawMonospaceCharacter(uint8_t xPosOffset, uint8_t yPosOffset, u
 	
 	for (int yPos = 0; yPos < 8; yPos++) {
 		for (int xPos = 0; xPos < 8; xPos++) {
-			uint8_t myValue = (monospaceFont[myChar-32][yPos] & (1<<xPos)) / (pow(2, xPos));
+			uint8_t myValue = (monospaceFont[OLED_STM32_getMonospaceGlyphIndex(myChar)][yPos] & (1<<xPos)) / (pow(2, xPos));
 			if (myValue == 1) { OLED_STM32_drawPixel(xPos + xPosOffset, yPos + yPosOffset); }
 		}
 	}
@@ -154,7 +154,7 @@ void OLED_STM32_drawMonospaceString(uint8_t xPos, uint8_t yPos, const char* mySt
 	uint8_t currentPosX = xPos;
 	while (myString[counter] != 0) {
 		OLED_STM32_drawMonospaceCharacter(currentPosX, yPos, myString[counter]);
-		currentPosX += monospaceFontWidth[myString[counter] - 32];
+		currentPosX += monospaceFontWidth[OLED_STM32_getMonospaceGlyphIndex(myString[counter])];
 		counter++;
 	}
 	OLED_STM32_updateDisplay();
@@ -162,28 +162,98 @@ void OLED_STM32_drawMonospaceString(uint8_t xPos, uint8_t yPos, const char* mySt
 }
 
 
-/* void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset) {
+// This is a helper function to calcualte the correct font glyph index for any given character
+uint8_t OLED_STM32_getMonospaceGlyphIndex(uint8_t charIndex) {
+
+	switch (charIndex) {
+		case 0xC4: return 95;
+		case 0xE4: return 96;
+		case 0xD6: return 97;
+		case 0xF6: return 98;
+		case 0xDC: return 99;
+		case 0xFC: return 100;
+		case 0xDF: return 101;
+		default: return charIndex - 32;
+	}
+
+}
+
+
+void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset) {
 
 	uint8_t correctionFactor = 0;
-	if (image_width % 8 > 0) { correctionFactor = 1; }
-	for (int yPos = 0; yPos < image_height; yPos++) {
-		for (int xPos = 0; xPos < image_width; xPos++) {
-			uint16_t currentBit = xPos / 8 + (yPos * (image_width / 8 + correctionFactor));
+	if (imageWidth % 8 > 0) { correctionFactor = 1; }
+	for (int yPos = 0; yPos < imageHeight; yPos++) {
+		for (int xPos = 0; xPos < imageWidth; xPos++) {
+			uint16_t currentBit = xPos / 8 + (yPos * (imageWidth / 8 + correctionFactor));
 			uint8_t currentBitMask = 1 << xPos % 8;
-			uint8_t myValue = (image_bits[currentBit] & currentBitMask) / currentBitMask;
+			uint8_t myValue = (imageBits[currentBit] & currentBitMask) / currentBitMask;
 			if (myValue) { OLED_STM32_drawPixel(xPos + xPosOffset, yPos + yPosOffset); }
-			}
 		}
+	}
 	OLED_STM32_updateDisplay();
 
-} */
+}
 
 
-/*
 void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd) {
 
 	// Do something to create a line. Diagonal is tricky.
+	for (int x = 0; x <= (xEnd - xStart); x++) {
+		for (int y = 0; y <= (yEnd - yStart); y++) {
+			OLED_STM32_drawPixel(xStart + x, yStart + y);
+		}
+	}
 
 }
-*/
+
+
+
+// This function is drawing a larger font glyph into the array of the OLED buffer.
+// This can only be used for characters 0-9, ' ' and 'A'.
+// The OLED buffer needs to be sent when drawing is completed by another call.
+void OLED_STM32_drawLargeCharacter(uint8_t xPosOffset, uint8_t yPosOffset, uint8_t myChar) {
+
+	uint8_t glyphWidth = latoGlyphWidth[OLED_STM32_getLargeGlyphIndex(myChar)];
+    const uint8_t *imageBits = latoFontBits[OLED_STM32_getLargeGlyphIndex(myChar)];
+	uint8_t correctionFactor = 0;
+	if (latoFontWidth % 8 > 0) { correctionFactor = 1; }
+	for (int yPos = 0; yPos < latoFontHeight; yPos++) {
+		for (int xPos = 0; xPos < glyphWidth; xPos++) {
+			uint16_t currentBit = xPos / 8 + (yPos * (latoFontWidth / 8 + correctionFactor));
+			uint8_t currentBitMask = 1 << xPos % 8;
+			uint8_t myValue = (imageBits[currentBit] & currentBitMask) / currentBitMask;
+			if (myValue) { OLED_STM32_drawPixel(xPos + xPosOffset + latoGlyphOffset[OLED_STM32_getLargeGlyphIndex(myChar)], yPos + yPosOffset); }
+		}
+	}
+
+}
+
+
+// This function takes the given string, checks for non-'\n' characters and advances the x-Position by the width of the glyph.
+// When the full string is drawn, the updated OLED buffer is sent to the device.
+void OLED_STM32_drawLargeString(uint8_t xPos, uint8_t yPos, const char* myString) {
+
+	int counter = 0;
+	uint8_t currentPosX = xPos;
+	while (myString[counter] != 0) {
+		OLED_STM32_drawLargeCharacter(currentPosX, yPos, myString[counter]);
+		currentPosX += latoGlyphWidth[OLED_STM32_getLargeGlyphIndex(myString[counter])] + latoGlyphOffset[OLED_STM32_getLargeGlyphIndex(myString[counter])];
+		counter++;
+	}
+	OLED_STM32_updateDisplay();
+	
+}
+
+
+// This is a helper function to calculate the correct font glyph index for 0-9, ' ' and 'A'
+uint8_t OLED_STM32_getLargeGlyphIndex(uint8_t charIndex) {
+
+	switch (charIndex) {
+        case 32: return 0;
+		case 65: return 11;
+		default: return charIndex - 47;
+	}
+
+}
 
