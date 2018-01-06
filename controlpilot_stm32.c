@@ -4,7 +4,6 @@
 #include "helper_stm32.h"
 #include "usart_stm32_console.h"
 
-uint16_t tempValue = 0;
 
 void CONTROLPILOT_STM32_configure(void) {
 
@@ -43,23 +42,6 @@ void CONTROLPILOT_STM32_configure(void) {
     uint16_t calibrationFactor = (uint16_t)ADC_GetCalibrationFactor(CONTROLPILOT_STM32_ADC);
     USART_STM32_sendIntegerToUSART("ADC Calibration Factor = ", calibrationFactor);
     ADC_Cmd(CONTROLPILOT_STM32_ADC, ENABLE);
-
-    /*
-    // Configure Interrupts
-    NVIC_InitTypeDef NVIC_InitStructure;
-    NVIC_InitStructure.NVIC_IRQChannel = CONTROLPILOT_STM32_ADC_IRQ;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_InitStructure.NVIC_IRQChannelPriority = CONTROLPILOT_STM32_ADC_IRQ_PRIO;
-    NVIC_Init(&NVIC_InitStructure);
-
-    // Activate ADC Interrupts for End of Conversion, End of Sequence
-    //ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOC);
-    //ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_FLAG_EOSEQ);
-    ADC_ClearFlag(CONTROLPILOT_STM32_ADC, ADC_IT_OVR);
-    //ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOC, ENABLE);
-    //ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_EOSEQ, ENABLE);
-    ADC_ITConfig(CONTROLPILOT_STM32_ADC, ADC_IT_OVR, ENABLE);
-    */
 
     // Wait until ADC is ready
     while (ADC_GetFlagStatus(CONTROLPILOT_STM32_ADC, ADC_FLAG_ADRDY) != SET) {}
@@ -340,26 +322,10 @@ void TIM16_IRQHandler(void) {
         if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == ACTIVE) { CONTROLPILOT_STM32_timerLowStart(); }
         CONTROLPILOT_STM32_setHigh();
         CONTROLPILOT_STM32_startADCConversion(HIGH);
-
-
         // Subtract offset if PWM is disabled
         if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == INACTIVE) {
             CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = CONTROLPILOT_STM32_CP_VOLTAGE_HIGH - CONTROLPILOT_STM32_ADC_PWM_CORRECTOR;
         }
-
-
-        /*
-        // Temporary
-        if (tempValue > 1200) {
-            USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_LOW = ", CONTROLPILOT_STM32_CP_VOLTAGE_LOW);
-            USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = ", CONTROLPILOT_STM32_CP_VOLTAGE_HIGH);
-            tempValue = 0;
-        } else {
-            tempValue++;
-        }
-        */
-        
-
         // Checking for PWM_STATE_HIGH by checking voltage against table
         switch (CONTROLPILOT_STM32_CP_VOLTAGE_HIGH) {
             case 2952 ... 3200:
@@ -405,13 +371,3 @@ void TIM17_IRQHandler(void) {
 
 }
 
-/*
-void ADC1_IRQHandler(void) {
-
-    if (ADC_GetITStatus(CONTROLPILOT_STM32_ADC, ADC_IT_OVR) != RESET) {
-        ADC_ClearITPendingBit(CONTROLPILOT_STM32_ADC, ADC_IT_OVR);
-        USART_STM32_sendStringToUSART("ADC_ISR_OVR");
-    }
-
-}
-*/

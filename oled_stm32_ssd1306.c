@@ -133,7 +133,7 @@ void OLED_STM32_drawPixel(uint8_t x, uint8_t y) {
 
 
 // This function will update the display to represent the main view of the system.
-void OLED_STM32_updateMainView(uint8_t currentAmpere, CONTROLPILOT_STM32_EVSE_MODE currentMode) {
+void OLED_STM32_updateMainView(void) {
 
 	OLED_STM32_clearDisplay();
 	OLED_STM32_drawLine(0,9,127,9);
@@ -142,11 +142,10 @@ void OLED_STM32_updateMainView(uint8_t currentAmpere, CONTROLPILOT_STM32_EVSE_MO
 	OLED_STM32_drawMonospaceString(46,56,"Eingabe");
 	OLED_STM32_drawMonospaceString(105,56,"-");
 	char maxAmpStr[4];
-	uint8_t maximumAmpereSetting = 32;
-	snprintf(maxAmpStr, sizeof(maxAmpStr), "%dA", maximumAmpereSetting);
+	snprintf(maxAmpStr, sizeof(maxAmpStr), "%dA", HELPER_STM32_getMaximumAmpere());
 	OLED_STM32_drawMonospaceString(0,0,maxAmpStr);
 	uint8_t offsetValue = 0;
-	switch (currentMode) {
+	switch (HELPER_STM32_getCurrentStatus()) {
 		case DISCONNECTED: offsetValue = 37; OLED_STM32_drawMonospaceString(48+offsetValue, 0, "Getrennt"); break;
 		case CONNECTED_NO_PWM: offsetValue = 29; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Verbunden"); break;
 		case CONNECTED: offsetValue = 29; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Verbunden"); break;
@@ -155,6 +154,32 @@ void OLED_STM32_updateMainView(uint8_t currentAmpere, CONTROLPILOT_STM32_EVSE_MO
 		case FAULT: offsetValue = 11; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Fehlermeldung"); break;
 	}
 	char str[3];
+	uint8_t currentAmpere = HELPER_STM32_getCurrentAmpere();
+	if (currentAmpere < 10) {
+		offsetValue = 20;
+	} else {
+		offsetValue = 0;
+	}
+	snprintf(str, sizeof(str), "%d", currentAmpere);
+	OLED_STM32_drawLargeString(32+offsetValue,18,str);
+	OLED_STM32_drawLargeString(76,18,"A");
+	OLED_STM32_updateDisplay();
+
+}
+
+
+// This function will update the display to represent the setup view of the system.
+void OLED_STM32_updateSetupView(uint8_t currentAmpere) {
+
+	OLED_STM32_clearDisplay();
+	OLED_STM32_drawLine(0,9,127,9);
+	OLED_STM32_drawLine(0,53,127,53);
+	OLED_STM32_drawMonospaceString(36,0,"Setup Mode");
+	OLED_STM32_drawMonospaceString(20,56,"+");
+	OLED_STM32_drawMonospaceString(46,56,"Eingabe");
+	OLED_STM32_drawMonospaceString(105,56,"-");
+	char str[3];
+	uint8_t offsetValue = 0;
 	if (currentAmpere < 10) {
 		offsetValue = 20;
 	} else {
@@ -232,6 +257,7 @@ void OLED_STM32_drawImage(uint8_t xPosOffset, uint8_t yPosOffset) {
 */
 
 
+// This function can currently only draw vertical or horizontal lines. No diagonal lines.
 void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t yEnd) {
 
 	// Do something to create a line. Diagonal is tricky.
@@ -242,7 +268,6 @@ void OLED_STM32_drawLine(uint8_t xStart, uint8_t yStart, uint8_t xEnd, uint8_t y
 	}
 
 }
-
 
 
 // This function is drawing a larger font glyph into the array of the OLED buffer.

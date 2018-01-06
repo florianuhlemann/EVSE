@@ -19,8 +19,13 @@ SECTIONS
 */
 
 //Variable Definitions
-#define    MAXIMUM_AMPERE_ADDRESS  0x08003C00
-#define    MAXIMUM_AMPERE_ADDRPTR  ((uint16_t*) ((uint32_t) MAXIMUM_AMPERE_ADDRESS))
+#ifndef FLASHADDRESS_H
+#define FLASHADDRESS_H
+#define MAXIMUM_AMPERE_ADDRESS 0x0800FC00 // 0x08003C00 for 16K STM32
+#define MAXIMUM_AMPERE_ADDRPTR ((uint16_t*) ((uint32_t) MAXIMUM_AMPERE_ADDRESS))
+#endif /* FLASHADDRESS_H */
+
 
 // Function Declarations
 void FLASH_STM32_setNewMaximumAmpere(uint8_t newValue);
+uint8_t FLASH_STM32_getMaximumAmpere(void);

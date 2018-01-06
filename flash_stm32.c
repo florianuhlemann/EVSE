@@ -6,10 +6,16 @@
 
 void FLASH_STM32_setNewMaximumAmpere(uint8_t newValue) {
 	FLASH_Unlock();
-	FLASH_Status eraseResponse = FLASH_ErasePage(0x08003C00);
+	FLASH_Status eraseResponse = FLASH_ErasePage(MAXIMUM_AMPERE_ADDRESS);
 	if (eraseResponse != FLASH_COMPLETE) { USART_STM32_sendStringToUSART("DEBUG: Could not erase memory page from flash memory for MAXIMUM_AMPERE."); }
-	FLASH_Status flashResponse = FLASH_ProgramWord(0x08003C00, newValue);
+	FLASH_Status flashResponse = FLASH_ProgramWord(MAXIMUM_AMPERE_ADDRESS, newValue);
 	if (flashResponse != FLASH_COMPLETE) { USART_STM32_sendStringToUSART("DEBUG: Could not write new MAXIMUM_AMPERE value to flash memory."); }
 	FLASH_Lock();
 	USART_STM32_sendStringToUSART("A new MAXIMUM_AMPERE value has been flashed. Please restart the device to take effect.");
+}
+
+uint8_t FLASH_STM32_getMaximumAmpere(void) {
+
+	return (uint8_t)(*MAXIMUM_AMPERE_ADDRPTR);;
+
 }
