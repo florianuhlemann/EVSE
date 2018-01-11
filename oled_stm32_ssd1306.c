@@ -138,9 +138,9 @@ void OLED_STM32_updateMainView(void) {
 	OLED_STM32_clearDisplay();
 	OLED_STM32_drawLine(0,9,127,9);
 	OLED_STM32_drawLine(0,53,127,53);
-	OLED_STM32_drawMonospaceString(20,56,"+");
+	OLED_STM32_drawMonospaceString(20,56,"-");
 	OLED_STM32_drawMonospaceString(46,56,"Eingabe");
-	OLED_STM32_drawMonospaceString(105,56,"-");
+	OLED_STM32_drawMonospaceString(105,56,"+");
 	char maxAmpStr[4];
 	snprintf(maxAmpStr, sizeof(maxAmpStr), "%dA", HELPER_STM32_getMaximumAmpere());
 	OLED_STM32_drawMonospaceString(0,0,maxAmpStr);
@@ -175,9 +175,9 @@ void OLED_STM32_updateSetupView(uint8_t currentAmpere) {
 	OLED_STM32_drawLine(0,9,127,9);
 	OLED_STM32_drawLine(0,53,127,53);
 	OLED_STM32_drawMonospaceString(36,0,"Setup Mode");
-	OLED_STM32_drawMonospaceString(20,56,"+");
+	OLED_STM32_drawMonospaceString(20,56,"-");
 	OLED_STM32_drawMonospaceString(46,56,"Eingabe");
-	OLED_STM32_drawMonospaceString(105,56,"-");
+	OLED_STM32_drawMonospaceString(105,56,"+");
 	char str[3];
 	uint8_t offsetValue = 0;
 	if (currentAmpere < 10) {

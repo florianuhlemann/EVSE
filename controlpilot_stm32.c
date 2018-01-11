@@ -2,7 +2,7 @@
 #include "stm32f0xx_adc.h"
 #include "controlpilot_stm32.h"
 #include "helper_stm32.h"
-#include "usart_stm32_console.h"
+//#include "usart_stm32_console.h"
 
 
 void CONTROLPILOT_STM32_configure(void) {
@@ -40,7 +40,7 @@ void CONTROLPILOT_STM32_configure(void) {
 
     // Start calibration, then wait until completed, then enable ADC
     uint16_t calibrationFactor = (uint16_t)ADC_GetCalibrationFactor(CONTROLPILOT_STM32_ADC);
-    USART_STM32_sendIntegerToUSART("ADC Calibration Factor = ", calibrationFactor);
+    //USART_STM32_sendIntegerToUSART("ADC Calibration Factor = ", calibrationFactor);
     ADC_Cmd(CONTROLPILOT_STM32_ADC, ENABLE);
 
     // Wait until ADC is ready
@@ -259,30 +259,30 @@ void CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONTROLPILOT_STM32_EVSE_MODE vehic
                 CONTROLPILOT_STM32_contactorOff();
                 CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
                 CONTROLPILOT_STM32_CP_VOLTAGE_LOW = 0; // Reset voltage to zero as it's not being measured actively
-                USART_STM32_sendStringToUSART("New Vehicle Mode: DISCONNECTED");
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: DISCONNECTED");
                 break;
             case CONNECTED_NO_PWM:
                 CONTROLPILOT_STM32_contactorOff();
                 CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE;
-                USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED_NO_PWM");
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED_NO_PWM");
                 break;
             case CONNECTED:
                 CONTROLPILOT_STM32_contactorOff();
-                USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED");
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED");
                 break;
             case CHARGING:
                 CONTROLPILOT_STM32_contactorOn();
-                USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING");
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING");
                 break;
             case CHARGING_COOLED:
                 CONTROLPILOT_STM32_contactorOff();
-                USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING_COOLED");
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING_COOLED");
                 break;
             case FAULT:
                 CONTROLPILOT_STM32_contactorOff();
                 // Perhaps trigger third timer to retry after x-seconds if fault still exists...
                 CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
-                USART_STM32_sendStringToUSART("New Vehicle Mode: FAULT");
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: FAULT");
                 break;
         }
     }
@@ -297,7 +297,7 @@ void CONTROLPILOT_STM32_setChargingCurrent(uint8_t ampereValue) {
     double calibratedDutyCycleFloat = (trueDutyCycleFloat * 0.9795 + 5.1305);
     uint16_t calibratedDutyCycle = (uint16_t)calibratedDutyCycleFloat;
     TIM_SetAutoreload(CONTROLPILOT_STM32_TIMER_LOW, calibratedDutyCycle);
-    USART_STM32_sendIntegerToUSART("calibratedDutyCycle = ", calibratedDutyCycle);
+    //USART_STM32_sendIntegerToUSART("calibratedDutyCycle = ", calibratedDutyCycle);
 
 }
 
@@ -307,8 +307,8 @@ void TIM14_IRQHandler(void) {
 
     if (RESET != TIM_GetITStatus(TIM14, TIM_IT_Update)) {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
-        USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_LOW = ", CONTROLPILOT_STM32_CP_VOLTAGE_LOW);
-        USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = ", CONTROLPILOT_STM32_CP_VOLTAGE_HIGH);        
+        //USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_LOW = ", CONTROLPILOT_STM32_CP_VOLTAGE_LOW);
+        //USART_STM32_sendIntegerToUSART("CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = ", CONTROLPILOT_STM32_CP_VOLTAGE_HIGH);        
     }
 
 }
