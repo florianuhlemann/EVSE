@@ -81,8 +81,8 @@ void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberO
 	}
 	for (uint16_t i = 0; i < numberOfElements; i++) {
 		SPI_SendData8(OLED_SPI_PORT, buffer[i]);
+		while( !(SPI1->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
 	}
-	while( !(SPI1->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
 	while( SPI1->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
 	if (bufferType == OLED_SPI_COMMAND) { OLED_STM32_digitalWrite(OLED_DC_PIN, HIGH); }
 
