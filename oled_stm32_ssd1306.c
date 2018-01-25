@@ -3,7 +3,6 @@
 #include "helper_stm32.h"
 #include "font8x8_basic.h"
 #include <math.h>
-#include <stdio.h>
 
 
 // Variable Declarations
@@ -81,9 +80,9 @@ void OLED_STM32_sendBuffer(uint8_t *buffer, uint8_t bufferType, uint16_t numberO
 	}
 	for (uint16_t i = 0; i < numberOfElements; i++) {
 		SPI_SendData8(OLED_SPI_PORT, buffer[i]);
-		while( !(SPI1->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
+		while( !(OLED_SPI_PORT->SR & SPI_I2S_FLAG_TXE) ); // wait until transmit complete
 	}
-	while( SPI1->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
+	while( OLED_SPI_PORT->SR & SPI_I2S_FLAG_BSY ); // wait until SPI is not busy anymore
 	if (bufferType == OLED_SPI_COMMAND) { OLED_STM32_digitalWrite(OLED_DC_PIN, HIGH); }
 
 }
@@ -141,8 +140,15 @@ void OLED_STM32_updateMainView(void) {
 	OLED_STM32_drawMonospaceString(20,56,"-");
 	OLED_STM32_drawMonospaceString(46,56,"Eingabe");
 	OLED_STM32_drawMonospaceString(105,56,"+");
-	char maxAmpStr[4];
-	snprintf(maxAmpStr, sizeof(maxAmpStr), "%dA", HELPER_STM32_getMaximumAmpere());
+	char maxAmpStr[4] = "   ";
+	if (HELPER_STM32_getMaximumAmpere() < 10) {
+		maxAmpStr[0] = HELPER_STM32_getMaximumAmpere() + 48;
+		maxAmpStr[1] = 0x41; //A
+	} else {
+		maxAmpStr[0] = HELPER_STM32_getMaximumAmpere() / 10 + 48;
+		maxAmpStr[1] = HELPER_STM32_getMaximumAmpere() % 10 + 48;
+		maxAmpStr[2] = 0x41; //A
+	}
 	OLED_STM32_drawMonospaceString(0,0,maxAmpStr);
 	uint8_t offsetValue = 0;
 	switch (HELPER_STM32_getCurrentStatus()) {
@@ -153,15 +159,19 @@ void OLED_STM32_updateMainView(void) {
 		case CHARGING_COOLED: offsetValue = 44; OLED_STM32_drawMonospaceString(48+offsetValue,0,"K\xfchlung"); break;
 		case FAULT: offsetValue = 11; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Fehlermeldung"); break;
 	}
-	char str[3];
-	uint8_t currentAmpere = HELPER_STM32_getCurrentAmpere();
-	if (currentAmpere < 10) {
+	char currentAmpStr[3] = "  ";
+	if (HELPER_STM32_getCurrentAmpere() < 10) {
+		currentAmpStr[0] = HELPER_STM32_getCurrentAmpere() + 48;
+	} else {
+		currentAmpStr[0] = HELPER_STM32_getCurrentAmpere() / 10 + 48;
+		currentAmpStr[1] = HELPER_STM32_getCurrentAmpere() % 10 + 48;
+	}
+	if (HELPER_STM32_getCurrentAmpere() < 10) {
 		offsetValue = 20;
 	} else {
 		offsetValue = 0;
 	}
-	snprintf(str, sizeof(str), "%d", currentAmpere);
-	OLED_STM32_drawLargeString(32+offsetValue,18,str);
+	OLED_STM32_drawLargeString(32+offsetValue,18,currentAmpStr);
 	OLED_STM32_drawLargeString(76,18,"A");
 	OLED_STM32_updateDisplay();
 
@@ -178,6 +188,7 @@ void OLED_STM32_updateSetupView(uint8_t currentAmpere) {
 	OLED_STM32_drawMonospaceString(20,56,"-");
 	OLED_STM32_drawMonospaceString(46,56,"Eingabe");
 	OLED_STM32_drawMonospaceString(105,56,"+");
+	/* replace with own code to save memory
 	char str[3];
 	uint8_t offsetValue = 0;
 	if (currentAmpere < 10) {
@@ -188,6 +199,7 @@ void OLED_STM32_updateSetupView(uint8_t currentAmpere) {
 	snprintf(str, sizeof(str), "%d", currentAmpere);
 	OLED_STM32_drawLargeString(32+offsetValue,18,str);
 	OLED_STM32_drawLargeString(76,18,"A");
+	*/
 	OLED_STM32_updateDisplay();
 
 }

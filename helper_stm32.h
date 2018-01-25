@@ -15,4 +15,5 @@ uint8_t HELPER_STM32_getCurrentAmpere(void);
 void HELPER_STM32_setCurrentAmpere(uint8_t newCurrentAmpere);
 uint8_t HELPER_STM32_getMaximumAmpere(void);
 void HELPER_STM32_setMaximumAmpere(uint8_t newMaximumAmpere);
+void HELPER_STM32_updateLoop(void);
 void delayMilliseconds (int milliseconds);

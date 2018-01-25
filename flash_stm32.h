@@ -19,11 +19,13 @@ SECTIONS
 */
 
 //Variable Definitions
-#ifndef FLASHADDRESS_H
-#define FLASHADDRESS_H
-#define MAXIMUM_AMPERE_ADDRESS 0x0800FC00 // 0x08003C00 for 16K STM32
+#ifdef STM32F030
+	#define MAXIMUM_AMPERE_ADDRESS 0x08003C00 // 16K STM32F030F4P6
+#endif
+#ifdef STM32F072
+	#define MAXIMUM_AMPERE_ADDRESS 0x08007FE0 // 32K STM32F070F6P6 - 32 for custom memory
+#endif
 #define MAXIMUM_AMPERE_ADDRPTR ((uint16_t*) ((uint32_t) MAXIMUM_AMPERE_ADDRESS))
-#endif /* FLASHADDRESS_H */
 
 
 // Function Declarations

@@ -62,8 +62,6 @@ void CONTROLPILOT_STM32_configure(void) {
     CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = 0;
     CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
     CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER = 0;
-    adcDelayCounterHigh = 0;
-    adcDelayCounterLow = 0;
 
 }
 
@@ -231,35 +229,62 @@ void CONTROLPILOT_STM32_startADCConversion(CONTROLPILOT_STM32_EVSE_SIDE activeSi
 
 void CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONTROLPILOT_STM32_EVSE_MODE vehicleMode) {
 
-    if (CONTROLPILOT_STM32_EVSE_ACTIVE_MODE != FAULT) {
-        switch (vehicleMode) {
+    // FAULT needs to be acted upon IMMEDIATELY!
+
+    // FAULT can only be cleared by DISCONNECTED, perhaps change to acitve-mode == fault
+    if (CONTROLPILOT_STM32_EVSE_ACTIVE_MODE == FAULT) {
+        if (vehicleMode != DISCONNECTED) {
+            return;
+        }
+    }
+
+    // A counter is used to ensure a solid EVSE_MODE change request is provided.
+    if (vehicleMode != CONTROLPILOT_STM32_EVSE_ACTIVE_MODE) {
+        if (CONTROLPILOT_STM32_EVSE_REQUESTED_MODE == vehicleMode) {
+            CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER++;
+        } else {
+            CONTROLPILOT_STM32_EVSE_REQUESTED_MODE = vehicleMode;
+            CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER = 0;
+        }
+        if (CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER < CONTROLPILOT_STM32_MODE_DELAY) { return; }
+
+        // After ensuring the EVSE_MODE request is safe, change the mode.
+        CONTROLPILOT_STM32_EVSE_ACTIVE_MODE = vehicleMode;
+        switch (CONTROLPILOT_STM32_EVSE_ACTIVE_MODE) {
             case DISCONNECTED:
                 CONTROLPILOT_STM32_contactorOff();
+                CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
+                CONTROLPILOT_STM32_CP_VOLTAGE_LOW = 0; // Reset voltage to zero as it's not being measured actively
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: DISCONNECTED");
                 break;
             case CONNECTED_NO_PWM:
                 CONTROLPILOT_STM32_contactorOff();
+                CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE;
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED_NO_PWM");
                 break;
             case CONNECTED:
                 CONTROLPILOT_STM32_contactorOff();
+                if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE != ACTIVE) { CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE; }
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: CONNECTED");
                 break;
             case CHARGING:
-                if (CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER > CONTROLPILOT_STM32_MODE_DELAY) {
-                    CONTROLPILOT_STM32_contactorOn();
-                } else {
-                    CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER++;
-                }
+                CONTROLPILOT_STM32_contactorOn();
+                if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE != ACTIVE) { CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE; }
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING");
                 break;
             case CHARGING_COOLED:
                 CONTROLPILOT_STM32_contactorOff();
+                if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE != ACTIVE) { CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE; }
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: CHARGING_COOLED");
                 break;
             case FAULT:
                 CONTROLPILOT_STM32_contactorOff();
-                CONTROLPILOT_STM32_EVSE_ACTIVE_MODE = FAULT;
-                CONTROLPILOT_STM32_timerLowStop();
-                CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER = 0;
+                // Perhaps trigger third timer to retry after x-seconds if fault still exists...
+                CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
+                //USART_STM32_sendStringToUSART("New Vehicle Mode: FAULT");
                 break;
         }
-        HELPER_STM32_setCurrentStatus(vehicleMode);
+        HELPER_STM32_setCurrentStatus(CONTROLPILOT_STM32_EVSE_ACTIVE_MODE);
     }
 
 }
@@ -315,85 +340,59 @@ void TIM14_IRQHandler(void) {
 }
 
 
-// Interrupt Routine for HIGH Timer
+// BUG found! when connecting with the fault condition, no fault is detected.
 void TIM16_IRQHandler(void) {
 
     if (TIM_GetITStatus(CONTROLPILOT_STM32_TIMER_HIGH, TIM_IT_Update) != RESET) {
         TIM_ClearITPendingBit(CONTROLPILOT_STM32_TIMER_HIGH, TIM_IT_Update);
+        if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == ACTIVE) { CONTROLPILOT_STM32_timerLowStart(); }
         CONTROLPILOT_STM32_setHigh();
-        if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE != INACTIVE && CONTROLPILOT_STM32_EVSE_ACTIVE_MODE != FAULT) {
-            CONTROLPILOT_STM32_timerLowStart();
-        }
-        if (adcDelayCounterHigh > CONTROLPILOT_STM32_ADC_DELAY) {
-            CONTROLPILOT_STM32_startADCConversion(HIGH);
-            adcDelayCounterHigh = 0;
-        } else {
-            adcDelayCounterHigh++;
-        }
-
-        if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE != ACTIVE) {
+        CONTROLPILOT_STM32_startADCConversion(HIGH);
+        // Subtract offset if PWM is disabled
+        if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == INACTIVE) {
             CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = CONTROLPILOT_STM32_CP_VOLTAGE_HIGH - CONTROLPILOT_STM32_ADC_PWM_CORRECTOR;
         }
-
+        // Checking for PWM_STATE_HIGH by checking voltage against table
         switch (CONTROLPILOT_STM32_CP_VOLTAGE_HIGH) {
             case 2952 ... 3200:
-                CONTROLPILOT_STM32_EVSE_ACTIVE_MODE = DISCONNECTED;
                 CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(DISCONNECTED);
-                CONTROLPILOT_STM32_timerLowStop();
-                CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
-                CONTROLPILOT_STM32_CP_VOLTAGE_LOW = 0;
-                CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER = 0;
                 break;
             case 2582 ... 2830:
                 if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == INACTIVE) {
-                    CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE;
                     CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONNECTED_NO_PWM);
                 } else {
                     CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CONNECTED);
                 }
-                CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER = 0;
                 break;
             case 2212 ... 2459:
-                if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == INACTIVE) {
-                    CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE;
-                }
                 CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CHARGING);
                 break;
             case 1841 ... 2089:
-                if (CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE == INACTIVE) {
-                    CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = ACTIVE;
-                }
                 CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(CHARGING_COOLED);
-                CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER = 0;
                 break;
             default:
-                CONTROLPILOT_STM32_timerLowStop();
-                CONTROLPILOT_STM32_EVSE_ACTIVE_PWM_STATE = INACTIVE;
-                CONTROLPILOT_STM32_CP_VOLTAGE_LOW = 0;
-                CONTROLPILOT_STM32_EVSE_MODE_SWITCH_COUNTER = 0;
+                // No Change or throw error?
                 break;
         }
-
-
-
-
-
     }
 
 }
 
 
-// LOW Interrupt Routine
-// This function reads the low voltage of the PWM signal and triggers
-// a FAULT state if the voltage is less negative than expected.
 void TIM17_IRQHandler(void) {
 
     if (TIM_GetITStatus(CONTROLPILOT_STM32_TIMER_LOW, TIM_IT_Update) != RESET) {
         TIM_ClearITPendingBit(CONTROLPILOT_STM32_TIMER_LOW, TIM_IT_Update);
-        CONTROLPILOT_STM32_setLow();
-        CONTROLPILOT_STM32_startADCConversion(LOW);
+        CONTROLPILOT_STM32_timerLowStop();
+		CONTROLPILOT_STM32_setLow();
+        if (adcDelayCounterLow > CONTROLPILOT_STM32_ADC_DELAY) {
+            CONTROLPILOT_STM32_startADCConversion(LOW);
+            adcDelayCounterLow = 0;
+        } else {
+            adcDelayCounterLow++;
+        }
+        // Set EVSE_STATE to FAULT if negative PWM voltage is reduced due to shorted or faulty safety diode.
         if (CONTROLPILOT_STM32_CP_VOLTAGE_LOW > 150) { CONTROLPILOT_STM32_SWITCH_VEHICLE_STATUS(FAULT); }
-
 	}
 
 }

@@ -53,7 +53,7 @@ typedef enum { DISCONNECTED = 0, CONNECTED_NO_PWM = 1, CONNECTED = 2, CHARGING =
 #define    OLED_DISPLAYOFFSET    0x00 // Display Offset = 0
 #define    OLED_SETSTARTLINE     0x40 // Set Start Line
 #define    OLED_CHGPUMPSETTING   0x8D // Set Charge Pump Setting
-#define    OLED_SETCHGPUMP       0x10 // Charge Pump Setting [0x10 = Disable] or [0x14 = Enable]
+#define    OLED_SETCHGPUMP       0x10 // Charge Pump Setting [0x10 = Disable] or [0x14 = Enable=32px]
 #define    OLED_SETADDRESSMODE   0x20 // Page Addressing Mode
 #define    OLED_HORZPAGEMODE     0x00 // Horizontal with auto new line
 #define    OLED_SEGMENTREMAP     0xA1 // Segment Remap A0 / A1 (Mirroring Horizontally)
@@ -61,9 +61,9 @@ typedef enum { DISCONNECTED = 0, CONNECTED_NO_PWM = 1, CONNECTED = 2, CHARGING =
 #define    OLED_SETCOMPINS       0xDA // Set COM pin HW config
 #define    OLED_COMPINSSETTING   0x12 // sequential com pin config [0x02 = 32px] or [0x12 = 64px]
 #define    OLED_SETCONTRAST      0x81 // Set Contrast
-#define    OLED_CONTRASTSETTING  0x8F // Contrast Setting
+#define    OLED_CONTRASTSETTING  0x7F // Contrast Setting 8F / 7F
 #define    OLED_SETPRECHGPERIOD  0xD9 // Set Precharge Period
-#define    OLED_PRECHGPERIOD     0xF1 // precharge period = 22 / F1
+#define    OLED_PRECHGPERIOD     0xF1 // precharge period = 22 / F1=64px+32px CONTRAST?
 #define    OLED_SETVCOMHDESELECT 0xDB // set VCOMh deselect
 #define    OLED_VCOMHDESELECTLVL 0x40 // VCOMh deselect level
 #define    OLED_DISABLESCROLL    0x2E // Disable Scrolling

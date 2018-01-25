@@ -1,11 +1,14 @@
 #include "stm32f0xx.h"
 #include "helper_stm32.h"
 #include "flash_stm32.h"
+#include "oled_stm32_ssd1306.h"
 
 
 volatile CONTROLPILOT_STM32_EVSE_MODE currentStatus;
+volatile CONTROLPILOT_STM32_EVSE_MODE lastStatus;
 volatile uint8_t currentAmpere;
 volatile uint8_t maximumAmpere;
+uint8_t loopCounter;
 
 
 void HELPER_STM32_initSystemClocks(void) {
@@ -50,6 +53,8 @@ void HELPER_STM32_initSystemVariables(void) {
 	}
 	currentAmpere = maximumAmpere;
 	currentStatus = DISCONNECTED;
+	lastStatus = DISCONNECTED;
+	loopCounter = 0;
 
 }
 
@@ -93,6 +98,19 @@ void HELPER_STM32_setMaximumAmpere(uint8_t newMaximumAmpere) {
 
 	maximumAmpere = newMaximumAmpere;
 	FLASH_STM32_setNewMaximumAmpere(maximumAmpere);
+
+}
+
+
+void HELPER_STM32_updateLoop(void) {
+
+	while (1) {
+		CONTROLPILOT_STM32_EVSE_MODE myStatus = currentStatus;
+		if (lastStatus != myStatus) {
+			OLED_STM32_updateMainView();
+			lastStatus = myStatus;
+		}
+	}
 
 }
 
