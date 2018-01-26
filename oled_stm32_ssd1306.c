@@ -3,6 +3,7 @@
 #include "helper_stm32.h"
 #include "font8x8_basic.h"
 #include <math.h>
+#include <stdlib.h>
 
 
 // Variable Declarations
@@ -134,12 +135,15 @@ void OLED_STM32_drawPixel(uint8_t x, uint8_t y) {
 // This function will update the display to represent the main view of the system.
 void OLED_STM32_updateMainView(void) {
 
+	// Basic Layout Setup
 	OLED_STM32_clearDisplay();
 	OLED_STM32_drawLine(0,9,127,9);
 	OLED_STM32_drawLine(0,53,127,53);
 	OLED_STM32_drawMonospaceString(20,56,"-");
 	OLED_STM32_drawMonospaceString(46,56,"Eingabe");
 	OLED_STM32_drawMonospaceString(105,56,"+");
+
+	// Maximum Ampere View
 	char maxAmpStr[4] = "   ";
 	if (HELPER_STM32_getMaximumAmpere() < 10) {
 		maxAmpStr[0] = HELPER_STM32_getMaximumAmpere() + 48;
@@ -150,7 +154,32 @@ void OLED_STM32_updateMainView(void) {
 		maxAmpStr[2] = 0x41; //A
 	}
 	OLED_STM32_drawMonospaceString(0,0,maxAmpStr);
+
+	// Temperature View
+	char maxTempStr[6] = "     ";
+	int8_t currentTemp = HELPER_STM32_getCurrentTemp();
 	uint8_t offsetValue = 0;
+	// Check if temperature is negative
+	if ( currentTemp < 0) {
+		maxTempStr[0] = 0x2D; // -
+		offsetValue = 1;
+		currentTemp = currentTemp * -1;
+	}
+	// check if temperature is double digit
+	if ((currentTemp > 9) | (currentTemp < -9)) {
+		maxTempStr[0+offsetValue] = currentTemp / 10 + 48;
+		maxTempStr[1+offsetValue] = currentTemp % 10 + 48;
+		offsetValue++;
+	} else {
+		maxTempStr[0+offsetValue] = currentTemp + 48;
+	}
+	// Add the degree symbols
+	maxTempStr[1+offsetValue] = 0xF8; // °
+	maxTempStr[2+offsetValue] = 0x43; // C
+	OLED_STM32_drawMonospaceString(24, 0, maxTempStr);
+
+	// Status View
+	//offsetValue = 0;
 	switch (HELPER_STM32_getCurrentStatus()) {
 		case DISCONNECTED: offsetValue = 37; OLED_STM32_drawMonospaceString(48+offsetValue, 0, "Getrennt"); break;
 		case CONNECTED_NO_PWM: offsetValue = 29; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Verbunden"); break;
@@ -159,6 +188,8 @@ void OLED_STM32_updateMainView(void) {
 		case CHARGING_COOLED: offsetValue = 44; OLED_STM32_drawMonospaceString(48+offsetValue,0,"K\xfchlung"); break;
 		case FAULT: offsetValue = 11; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Fehlermeldung"); break;
 	}
+
+	// Large current Ampere View
 	char currentAmpStr[3] = "  ";
 	if (HELPER_STM32_getCurrentAmpere() < 10) {
 		currentAmpStr[0] = HELPER_STM32_getCurrentAmpere() + 48;
@@ -245,6 +276,7 @@ uint8_t OLED_STM32_getMonospaceGlyphIndex(uint8_t charIndex) {
 		case 0xDC: return 99;
 		case 0xFC: return 100;
 		case 0xDF: return 101;
+		case 0xF8: return 102;
 		default: return charIndex - 32;
 	}
 

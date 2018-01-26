@@ -6,6 +6,10 @@
 #include "oled_stm32_ssd1306.h"
 #include <stdlib.h>
 
+uint16_t valueOne = 0;
+uint16_t valueTwo = 0;
+uint16_t valueThree = 0;
+
 
 void CONTROLPILOT_STM32_configure(void) {
 
@@ -199,6 +203,9 @@ void CONTROLPILOT_STM32_timerThreeStop(void) {
 
 void CONTROLPILOT_STM32_startADCConversion(CONTROLPILOT_STM32_EVSE_SIDE activeSide) {
 
+    // Variable Init
+    double ADCraw;
+
     // ADC Data Acquisition Loop
     ADC1->CR |= ADC_CR_ADSTART;
     int i = 0;
@@ -210,21 +217,23 @@ void CONTROLPILOT_STM32_startADCConversion(CONTROLPILOT_STM32_EVSE_SIDE activeSi
     ADC1->ISR |= ADC_ISR_EOSEQ;
 
     // Vdd calculation
-    double Vrefint_cal_float = (double)(*VREFINT_CAL_ADDR);
-    double Vrefint = (double)ADC_raw[2];
-    double Vddfloat = 3300.0 * Vrefint_cal_float / Vrefint;
+    ADCraw = (double)ADC_raw[2];
+    double Vrefint_cal_float = (double)(*VREFINT_CAL_ADDRPTR);
+    double Vddfloat = 3300.0 * Vrefint_cal_float / ADCraw;
 
     // EVSE_IN calculation
-    double ADCrawFloat = (double)ADC_raw[0];
-    double cpVoltageFloat = Vddfloat * ADCrawFloat / 4095.0;
+    ADCraw = (double)ADC_raw[0];
+    double EVSEvoltage = Vddfloat * ADCraw / 4095.0;
     if (activeSide == HIGH) {
-        CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = (uint16_t)cpVoltageFloat;
+        CONTROLPILOT_STM32_CP_VOLTAGE_HIGH = (uint16_t)EVSEvoltage;
     } else {
-        CONTROLPILOT_STM32_CP_VOLTAGE_LOW = (uint16_t)cpVoltageFloat;
+        CONTROLPILOT_STM32_CP_VOLTAGE_LOW = (uint16_t)EVSEvoltage;
     }
 
-    // Temp calculation
-
+    // Temp calculation; reduced to Vsense to lower workload on this function
+    ADCraw = (double)ADC_raw[1];
+    double VsenseCurrent = Vddfloat * ADCraw / 4095.0;    
+    HELPER_STM32_setCurrentTemp(VsenseCurrent);
 
 }
 
@@ -281,6 +290,8 @@ void TIM14_IRQHandler(void) {
 
     if (TIM_GetITStatus(TIM14, TIM_IT_Update) != RESET) {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
+        HELPER_STM32_setNeedsUpdate(1);
+        /* DEBUG VIEW
         OLED_STM32_clearDisplay();
         OLED_STM32_drawLine(0,9,127,9);
         char maxAmpStr[4] = "   ";
@@ -303,13 +314,17 @@ void TIM14_IRQHandler(void) {
             case FAULT: offsetValue = 11; OLED_STM32_drawMonospaceString(48+offsetValue,0,"Fehlermeldung"); break;
         }
         char buffer[8];
-        itoa(CONTROLPILOT_STM32_CP_VOLTAGE_HIGH,buffer,10);
+        itoa(CONTROLPILOT_STM32_CP_VOLTAGE_HIGH, buffer,10);
         OLED_STM32_drawMonospaceString(0,11,"CP_VLT_HIGH = ");
         OLED_STM32_drawMonospaceString(78,11,buffer);
-        itoa(CONTROLPILOT_STM32_CP_VOLTAGE_LOW,buffer,10);
-        OLED_STM32_drawMonospaceString(0,19,"CP_VLT_LOW  = ");
-        OLED_STM32_drawMonospaceString(78,19,buffer);
+        itoa(CONTROLPILOT_STM32_CP_VOLTAGE_LOW, buffer,10);
+        OLED_STM32_drawMonospaceString(0,20,"CP_VLT_LOW  = ");
+        OLED_STM32_drawMonospaceString(78,20,buffer);
+        //itoa(CONTROLPILOT_STM32_TEMP_10X, buffer,10);
+        //OLED_STM32_drawMonospaceString(0,29,"TEMP_10X  = ");
+        //OLED_STM32_drawMonospaceString(78,29,buffer);
         OLED_STM32_updateDisplay();
+        */
     }
 
 }

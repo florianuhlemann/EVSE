@@ -35,7 +35,7 @@ typedef enum {FALSE = 0, TRUE = 1} Boolean;
 #endif /* BOOLEAN_H */
 
 // Variable Declarations
-uint8_t maximumAmpere;
+
 
 // Function Declarations
 void USERBUTTON_STM32_configureInterface(void);

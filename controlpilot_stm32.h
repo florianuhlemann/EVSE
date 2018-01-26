@@ -43,7 +43,7 @@ typedef enum {     INACTIVE = 0,           ACTIVE = 1 }                         
 // Constants Definitions
 #define    CONTROLPILOT_STM32_TIMER_HIGH_PERIOD  1021
 #define    CONTROLPILOT_STM32_TIMER_LOW_PERIOD   539
-#define    VREFINT_CAL_ADDR                      ((uint16_t*) ((uint32_t) 0x1ffff7ba))
+#define    VREFINT_CAL_ADDRPTR                   ((uint16_t*) ((uint32_t) 0x1ffff7ba))
 #define    CONTROLPILOT_STM32_ADC_DELAY          3
 #define    CONTROLPILOT_STM32_MODE_DELAY         21
 
